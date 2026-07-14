@@ -57,12 +57,15 @@ const Signup = () => {
     }}>
       <div className="signup-card" style={{ width: '100%', maxWidth: '440px', padding: '0 20px' }}>
         <div style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: 'var(--radius)',
           padding: '48px 40px',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
         }}>
           {/* Top accent line */}
           <div style={{
@@ -70,8 +73,8 @@ const Signup = () => {
             top: 0,
             left: 0,
             right: 0,
-            height: '1px',
-            background: 'linear-gradient(90deg, transparent, var(--accent), transparent)'
+            height: '2px',
+            background: 'linear-gradient(90deg, transparent, var(--accent), var(--accent-secondary), transparent)'
           }}></div>
 
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>

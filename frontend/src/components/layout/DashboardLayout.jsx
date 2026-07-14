@@ -3,7 +3,7 @@ import Sidebar from './Sidebar';
 
 const DashboardLayout = () => {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar />
       <div style={{ 
         flex: 1, 

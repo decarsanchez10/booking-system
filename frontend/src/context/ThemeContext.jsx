@@ -9,21 +9,14 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('obsidian-theme');
-    if (saved) return saved;
-    // Respect system preference on first visit
-    if (window.matchMedia?.('(prefers-color-scheme: light)').matches) return 'light';
-    return 'dark';
-  });
+  const theme = 'dark';
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('obsidian-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    // Light mode has been removed
   };
 
   return (

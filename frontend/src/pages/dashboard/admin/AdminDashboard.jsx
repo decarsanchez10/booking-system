@@ -25,7 +25,7 @@ const DEPT_DATA = [
   { name: 'Account', value: 10 },
 ];
 
-const COLORS = ['#5D001A', '#8f0028', '#c71f4b', '#ff4d79']; // Burgundy variations
+const COLORS = ['#8b5cf6', '#a78bfa', '#06b6d4', '#67e8f9']; // Aurora palette
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -44,7 +44,7 @@ const AdminDashboard = () => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '12px', borderRadius: '4px' }}>
+        <div style={{ background: 'rgba(9, 9, 14, 0.7)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px 16px', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
           <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{label}</p>
           {payload.map((entry, index) => (
             <p key={index} style={{ margin: '4px 0', color: entry.color, fontSize: '0.9rem', fontWeight: 600 }}>

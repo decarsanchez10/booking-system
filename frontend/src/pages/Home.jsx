@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
+import HeroShader from '../components/HeroShader';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -85,8 +86,9 @@ const Home = () => {
       {/* ═══════════════════════════════════════
           HERO
           ═══════════════════════════════════════ */}
-      <section className="hero">
-        <div className="section-container">
+      <section className="hero" style={{ position: 'relative', overflow: 'hidden' }}>
+        <HeroShader />
+        <div className="section-container" style={{ position: 'relative', zIndex: 1 }}>
           <div className="hero-grid">
             <div className="hero-content">
               <div className="hero-badge">
@@ -116,12 +118,7 @@ const Home = () => {
                 </Link>
               </div>
 
-              <div className="hero-trust">
-                <span className="hero-trust-item"><span className="hero-trust-icon">✦</span> Certified IT Staff</span>
-                <span className="hero-trust-item"><span className="hero-trust-icon">✦</span> Secure Booking</span>
-                <span className="hero-trust-item"><span className="hero-trust-icon">✦</span> Instant Confirmation</span>
-                <span className="hero-trust-item"><span className="hero-trust-icon">✦</span> JWT Protected</span>
-              </div>
+
             </div>
 
             <div className="hero-visual">
