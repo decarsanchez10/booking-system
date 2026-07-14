@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import RoleRoute from './components/RoleRoute';
 
 // Public Pages
@@ -38,49 +39,52 @@ const PublicLayout = ({ children }) => (
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
-          <Route path="/login" element={<PublicLayout><Login /></PublicLayout>} />
-          <Route path="/signup" element={<PublicLayout><Signup /></PublicLayout>} />
-          <Route path="/forgot-password" element={<PublicLayout><ForgotPassword /></PublicLayout>} />
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
+            <Route path="/login" element={<PublicLayout><Login /></PublicLayout>} />
+            <Route path="/signup" element={<PublicLayout><Signup /></PublicLayout>} />
+            <Route path="/forgot-password" element={<PublicLayout><ForgotPassword /></PublicLayout>} />
 
-          {/* User Dashboard Routes */}
-          <Route path="/dashboard/user" element={<RoleRoute allowedRoles={['user']}><DashboardLayout /></RoleRoute>}>
-            <Route index element={<UserDashboard />} />
-            <Route path="book" element={<BookAppointment />} />
-            <Route path="appointments" element={<UserAppointments />} />
-            <Route path="profile" element={<UserProfile />} />
-          </Route>
+            {/* User Dashboard Routes */}
+            <Route path="/dashboard/user" element={<RoleRoute allowedRoles={['user']}><DashboardLayout /></RoleRoute>}>
+              <Route index element={<UserDashboard />} />
+              <Route path="book" element={<BookAppointment />} />
+              <Route path="appointments" element={<UserAppointments />} />
+              <Route path="profile" element={<UserProfile />} />
+            </Route>
 
-          {/* Agent Dashboard Routes */}
-          <Route path="/dashboard/agent" element={<RoleRoute allowedRoles={['agent']}><DashboardLayout /></RoleRoute>}>
-            <Route index element={<AgentDashboard />} />
-            <Route path="appointments" element={<AgentAppointments />} />
-            <Route path="availability" element={<AgentAvailability />} />
-          </Route>
+            {/* Agent Dashboard Routes */}
+            <Route path="/dashboard/agent" element={<RoleRoute allowedRoles={['agent']}><DashboardLayout /></RoleRoute>}>
+              <Route index element={<AgentDashboard />} />
+              <Route path="appointments" element={<AgentAppointments />} />
+              <Route path="availability" element={<AgentAvailability />} />
+            </Route>
 
-          {/* Admin Dashboard Routes */}
-          <Route path="/dashboard/admin" element={<RoleRoute allowedRoles={['admin']}><DashboardLayout /></RoleRoute>}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="agents" element={<AdminAgents />} />
-            <Route path="settings" element={<AdminSettings />} />
-          </Route>
+            {/* Admin Dashboard Routes */}
+            <Route path="/dashboard/admin" element={<RoleRoute allowedRoles={['admin']}><DashboardLayout /></RoleRoute>}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="agents" element={<AdminAgents />} />
+              <Route path="settings" element={<AdminSettings />} />
+            </Route>
 
-          {/* Legacy Redirects */}
-          <Route path="/slots" element={<Navigate to="/dashboard/user/book" replace />} />
-          <Route path="/book/:id" element={<Navigate to="/dashboard/user/book" replace />} />
-          <Route path="/my-bookings" element={<Navigate to="/dashboard/user/appointments" replace />} />
-          
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+            {/* Legacy Redirects */}
+            <Route path="/slots" element={<Navigate to="/dashboard/user/book" replace />} />
+            <Route path="/book/:id" element={<Navigate to="/dashboard/user/book" replace />} />
+            <Route path="/my-bookings" element={<Navigate to="/dashboard/user/appointments" replace />} />
+            
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
 export default App;
+

@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Sun, Moon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const Navbar = () => {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,6 +33,14 @@ const Navbar = () => {
       </div>
 
       <div className="nav-right">
+        <button
+          className="theme-toggle"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+        >
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
         <Link to="/login" className="btn-secondary">Log In</Link>
         <Link to="/slots" className="btn-primary">Book Appointment</Link>
       </div>

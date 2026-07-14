@@ -14,10 +14,10 @@ const MOCK_APPOINTMENTS = [
 const getStatusColor = (status) => {
   switch(status) {
     case 'upcoming': return { text: '#22c55e', bg: 'rgba(34, 197, 94, 0.1)', border: 'rgba(34, 197, 94, 0.2)', icon: <AlertCircle size={14} /> };
-    case 'completed': return { text: 'var(--text-secondary)', bg: 'rgba(255, 255, 255, 0.05)', border: 'var(--border)', icon: <CheckCircle size={14} /> };
+    case 'completed': return { text: 'var(--text-secondary)', bg: 'var(--overlay-soft)', border: 'var(--border)', icon: <CheckCircle size={14} /> };
     case 'cancelled': return { text: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.2)', icon: <XCircle size={14} /> };
     case 'pending': return { text: '#eab308', bg: 'rgba(234, 179, 8, 0.1)', border: 'rgba(234, 179, 8, 0.2)', icon: <Clock size={14} /> };
-    default: return { text: 'var(--text-secondary)', bg: 'rgba(255, 255, 255, 0.05)', border: 'var(--border)', icon: null };
+    default: return { text: 'var(--text-secondary)', bg: 'var(--overlay-soft)', border: 'var(--border)', icon: null };
   }
 };
 

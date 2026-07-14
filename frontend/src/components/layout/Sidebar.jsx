@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -10,12 +11,15 @@ import {
   Activity, 
   FileText,
   Shield,
-  Briefcase
+  Briefcase,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const Sidebar = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   
   const role = user?.role || 'user';
 
@@ -54,7 +58,8 @@ const Sidebar = () => {
       borderRight: '1px solid var(--border)',
       display: 'flex',
       flexDirection: 'column',
-      zIndex: 100
+      zIndex: 100,
+      transition: 'background 0.3s ease, border-color 0.3s ease'
     }}>
       <div style={{ padding: '24px', borderBottom: '1px solid var(--border)' }}>
         <Link to="/" className="nav-brand" style={{ fontSize: '1rem' }}>
@@ -98,7 +103,7 @@ const Sidebar = () => {
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                  e.currentTarget.style.background = 'var(--overlay-light)';
                   e.currentTarget.style.color = 'var(--text-primary)';
                 }
               }}
@@ -117,6 +122,18 @@ const Sidebar = () => {
       </div>
 
       <div style={{ padding: '24px', borderTop: '1px solid var(--border)' }}>
+        {/* Theme toggle */}
+        <button
+          className="theme-toggle"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          style={{ width: '100%', marginBottom: '16px', gap: '8px' }}
+        >
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          <span style={{ fontSize: '0.85rem' }}>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+        </button>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
           <div style={{ 
             width: '36px', 

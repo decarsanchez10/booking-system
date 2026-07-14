@@ -15,7 +15,7 @@ const getStatusBadge = (status) => {
   switch(status) {
     case 'active': return <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.2)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>Active</span>;
     case 'pending': return <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', border: '1px solid rgba(234, 179, 8, 0.2)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>Pending</span>;
-    case 'completed': return <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-secondary)', border: '1px solid var(--border)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>Completed</span>;
+    case 'completed': return <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', background: 'var(--overlay-soft)', color: 'var(--text-secondary)', border: '1px solid var(--border)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>Completed</span>;
     default: return null;
   }
 };
@@ -96,7 +96,7 @@ const Appointments = () => {
             </thead>
             <tbody>
               {filteredQueue.map((apt, i) => (
-                <tr key={i} className="table-row" style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s ease' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                <tr key={i} className="table-row" style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s ease' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--overlay-subtle)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                   <td style={{ padding: '16px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>{apt.id}</td>
                   <td style={{ padding: '16px' }}>
                     <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '4px' }}>{apt.name}</div>

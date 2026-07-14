@@ -79,7 +79,7 @@ const Profile = () => {
             </div>
             <h2 style={{ fontSize: '1.2rem', marginBottom: '4px' }}>{user?.name}</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>Student • Computer Science</p>
-            <div style={{ display: 'inline-block', padding: '4px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ display: 'inline-block', padding: '4px 12px', background: 'var(--overlay-soft)', borderRadius: '100px', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
               ID: STU-849201
             </div>
           </div>
@@ -121,7 +121,7 @@ const Profile = () => {
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Email Address</label>
-                <input type="email" defaultValue={user?.email} disabled style={{ width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-muted)', outline: 'none', cursor: 'not-allowed' }} />
+                <input type="email" defaultValue={user?.email} disabled style={{ width: '100%', padding: '12px 16px', background: 'var(--overlay-subtle)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-muted)', outline: 'none', cursor: 'not-allowed' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Phone Number</label>
