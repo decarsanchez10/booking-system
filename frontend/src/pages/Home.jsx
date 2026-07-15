@@ -7,6 +7,8 @@ import HeroShader from '../components/HeroShader';
 
 gsap.registerPlugin(ScrollTrigger);
 
+import headsetImg from '../assets/headset.png';
+
 const Home = () => {
   const container = useRef();
 
@@ -123,8 +125,8 @@ const Home = () => {
 
             <div className="hero-visual">
               <img
-                src="/hero-illustration.png"
-                alt="Futuristic IT support holographic dashboard"
+                src={headsetImg}
+                alt="Support headset"
                 className="hero-image"
               />
             </div>
