@@ -21,16 +21,14 @@ const Navbar = () => {
 
       <div className="nav-center">
         <Link to="/" className={location.pathname === '/' ? 'active' : ''}>Home</Link>
-        <a href="#how-it-works">How It Works</a>
-        <a href="#specialties">Agents</a>
-        <Link to="/slots" className={location.pathname === '/slots' ? 'active' : ''}>Appointments</Link>
-        <a href="#support">Support</a>
-        <a href="#about">About</a>
+        <Link to="/services" className={location.pathname === '/services' ? 'active' : ''}>Services</Link>
+        <Link to="/knowledge-base" className={location.pathname === '/knowledge-base' ? 'active' : ''}>Knowledge Base</Link>
+        <Link to="/contact" className={location.pathname === '/contact' ? 'active' : ''}>Contact</Link>
       </div>
 
       <div className="nav-right">
         <Link to="/login" className="btn-secondary">Log In</Link>
-        <Link to="/slots" className="btn-primary">Book Appointment</Link>
+        <Link to="/signup" className="btn-primary">Get Started</Link>
       </div>
     </nav>
   );

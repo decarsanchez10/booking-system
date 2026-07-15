@@ -24,16 +24,19 @@ export const AuthProvider = ({ children }) => {
     return 'user';
   };
 
-  const login = (email, password) => {
+  const login = (email, password, role = null) => {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         if (email && password) {
-          const role = getRoleFromEmail(email);
+          // If a role is provided from the UI, use it. Otherwise derive from email.
+          let assignedRole = role || getRoleFromEmail(email);
+          if (email.includes('admin')) assignedRole = 'admin'; // Override if admin email
+          
           const userData = {
             id: Date.now(),
             name: email.split('@')[0],
             email,
-            role, // 'user', 'agent', or 'admin'
+            role: assignedRole,
           };
           const token = 'jwt_mock_' + Date.now();
           localStorage.setItem('obsidian_user', JSON.stringify(userData));

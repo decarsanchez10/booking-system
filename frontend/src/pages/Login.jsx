@@ -9,13 +9,19 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const container = useRef();
 
-  // Where to redirect after login (defaults to /slots)
-  const from = location.state?.from || '/slots';
+  const getDashboardPath = (role) => {
+    if (role === 'admin') return '/dashboard/admin';
+    if (role === 'agent') return '/dashboard/agent';
+    return '/dashboard/user';
+  };
+
+  // Where to redirect after login
+  const from = location.state?.from || null;
 
   useGSAP(() => {
     gsap.from('.login-card', { opacity: 0, y: 20, duration: 0.6, ease: 'power3.out' });
@@ -27,8 +33,9 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      navigate(from, { replace: true });
+      const userData = await login(email, password);
+      const dest = from || getDashboardPath(userData.role);
+      navigate(dest, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -173,14 +180,21 @@ const Login = () => {
               />
             </div>
 
-            <button 
-              type="submit" 
-              className="btn-primary btn-large" 
-              disabled={isLoading}
-              style={{ width: '100%', opacity: isLoading ? 0.7 : 1 }}
-            >
-              {isLoading ? 'Authenticating...' : 'Log In'}
-            </button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-12px', marginBottom: '20px' }}>
+            <Link to="/forgot-password" style={{ color: 'var(--text-muted)', fontSize: '0.82rem', textDecoration: 'none' }}
+              onMouseEnter={e => e.target.style.color = 'var(--accent)'}
+              onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}
+            >Forgot password?</Link>
+          </div>
+
+          <button 
+            type="submit" 
+            className="btn-primary btn-large" 
+            disabled={isLoading}
+            style={{ width: '100%', opacity: isLoading ? 0.7 : 1 }}
+          >
+            {isLoading ? 'Authenticating...' : 'Log In'}
+          </button>
           </form>
 
           <p style={{ 
@@ -190,7 +204,7 @@ const Login = () => {
             color: 'var(--text-muted)' 
           }}>
             Don't have an account?{' '}
-            <Link to="/signup" state={{ from }} style={{ color: 'var(--accent)', fontWeight: 600 }}>
+            <Link to="/signup" style={{ color: 'var(--accent)', fontWeight: 600 }}>
               Sign Up
             </Link>
           </p>

@@ -2,88 +2,244 @@ import { useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useAuth } from '../../../context/AuthContext';
-import { Camera, Shield, Bell, Save } from 'lucide-react';
+import { Camera, Shield, Bell, Save, X, Eye, EyeOff, CheckCircle, Upload } from 'lucide-react';
+
+/* ── tiny re-usable modal ─────────────────────────── */
+const Modal = ({ title, children, onClose }) => (
+  <div style={{
+    position: 'fixed', inset: 0, zIndex: 9999,
+    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+  }} onClick={onClose}>
+    <div style={{
+      background: 'var(--bg-elevated, #141418)',
+      border: '1px solid var(--border)',
+      borderRadius: '20px', padding: '36px', width: '100%', maxWidth: '440px',
+      position: 'relative'
+    }} onClick={e => e.stopPropagation()}>
+      <button onClick={onClose} style={{
+        position: 'absolute', top: '16px', right: '16px',
+        background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)'
+      }}><X size={20} /></button>
+      <h3 style={{ fontSize: '1.3rem', marginBottom: '24px' }}>{title}</h3>
+      {children}
+    </div>
+  </div>
+);
 
 const Profile = () => {
-  const { user } = useAuth();
-  const [isSaving, setIsSaving] = useState(false);
-  const container = useRef();
+  const { user, login } = useAuth();
 
+  /* form state */
+  const [firstName, setFirstName] = useState(user?.name?.split(' ')[0] || '');
+  const [lastName, setLastName]   = useState(user?.name?.split(' ')[1] || '');
+  const [phone, setPhone]         = useState('+1 (555) 123-4567');
+  const [department, setDepartment] = useState('Computer Science');
+
+  /* avatar */
+  const [avatar, setAvatar] = useState(null); // data-url or null
+  const fileInputRef = useRef();
+
+  /* save */
+  const [isSaving, setIsSaving]   = useState(false);
+  const [saved, setSaved]          = useState(false);
+
+  /* password modal */
+  const [showPwModal, setShowPwModal]   = useState(false);
+  const [currentPw, setCurrentPw]       = useState('');
+  const [newPw, setNewPw]               = useState('');
+  const [confirmPw, setConfirmPw]       = useState('');
+  const [showCurrent, setShowCurrent]   = useState(false);
+  const [showNew, setShowNew]           = useState(false);
+  const [pwError, setPwError]           = useState('');
+  const [pwSuccess, setPwSuccess]       = useState(false);
+  const [savingPw, setSavingPw]         = useState(false);
+
+  /* 2FA modal */
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+
+  /* notifications */
+  const [notifPrefs, setNotifPrefs] = useState({
+    reminders: true,
+    status: true,
+    announcements: false,
+  });
+
+  const container = useRef();
   useGSAP(() => {
-    gsap.from('.profile-section', {
-      opacity: 0,
-      y: 20,
-      stagger: 0.15,
-      duration: 0.5,
-      ease: 'power2.out'
-    });
+    gsap.from('.profile-section', { opacity: 0, y: 20, stagger: 0.15, duration: 0.5, ease: 'power2.out' });
   }, { scope: container });
+
+  /* ── handlers ── */
+  const handleAvatarClick = () => fileInputRef.current?.click();
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setAvatar(ev.target.result);
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = (e) => {
     e.preventDefault();
     setIsSaving(true);
-    setTimeout(() => setIsSaving(false), 1000);
+    setSaved(false);
+    setTimeout(() => { setIsSaving(false); setSaved(true); setTimeout(() => setSaved(false), 3000); }, 1000);
+  };
+
+  const handlePasswordSave = () => {
+    setPwError('');
+    if (!currentPw) return setPwError('Enter your current password.');
+    if (newPw.length < 6) return setPwError('New password must be at least 6 characters.');
+    if (newPw !== confirmPw) return setPwError('Passwords do not match.');
+    setSavingPw(true);
+    setTimeout(() => {
+      setSavingPw(false);
+      setPwSuccess(true);
+      setTimeout(() => { setShowPwModal(false); setPwSuccess(false); setCurrentPw(''); setNewPw(''); setConfirmPw(''); }, 1500);
+    }, 1000);
+  };
+
+  const handleEnable2FA = () => {
+    setTwoFAEnabled(true);
+    setShow2FAModal(false);
   };
 
   return (
     <div ref={container}>
+      {/* ── Password Modal ── */}
+      {showPwModal && (
+        <Modal title="Change Password" onClose={() => setShowPwModal(false)}>
+          {pwSuccess ? (
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              <CheckCircle size={48} color="#1dd1a1" style={{ marginBottom: '12px' }} />
+              <p style={{ color: '#1dd1a1', fontWeight: 600 }}>Password updated successfully!</p>
+            </div>
+          ) : (
+            <>
+              {pwError && <div style={{ padding: '10px 14px', background: 'rgba(255,107,107,0.1)', border: '1px solid rgba(255,107,107,0.3)', borderRadius: '10px', color: '#ff6b6b', fontSize: '0.85rem', marginBottom: '16px' }}>{pwError}</div>}
+              {[
+                { label: 'Current Password', value: currentPw, set: setCurrentPw, show: showCurrent, toggle: () => setShowCurrent(p => !p) },
+                { label: 'New Password', value: newPw, set: setNewPw, show: showNew, toggle: () => setShowNew(p => !p) },
+                { label: 'Confirm New Password', value: confirmPw, set: setConfirmPw, show: showNew, toggle: null },
+              ].map(field => (
+                <div key={field.label} style={{ marginBottom: '16px', position: 'relative' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>{field.label}</label>
+                  <input
+                    type={field.show ? 'text' : 'password'}
+                    value={field.value}
+                    onChange={e => field.set(e.target.value)}
+                    style={{ width: '100%', padding: '12px 40px 12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                  {field.toggle && (
+                    <button onClick={field.toggle} style={{ position: 'absolute', right: '12px', top: '34px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                      {field.show ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button onClick={handlePasswordSave} className="btn-primary" disabled={savingPw} style={{ width: '100%', padding: '12px', marginTop: '8px' }}>
+                {savingPw ? 'Updating...' : 'Update Password'}
+              </button>
+            </>
+          )}
+        </Modal>
+      )}
+
+      {/* ── 2FA Modal ── */}
+      {show2FAModal && (
+        <Modal title={twoFAEnabled ? 'Two-Factor Auth Enabled' : 'Enable Two-Factor Auth'} onClose={() => setShow2FAModal(false)}>
+          {twoFAEnabled ? (
+            <div style={{ textAlign: 'center', padding: '12px 0' }}>
+              <CheckCircle size={48} color="#1dd1a1" style={{ marginBottom: '12px' }} />
+              <p style={{ color: '#1dd1a1', fontWeight: 600 }}>2FA is already enabled on your account.</p>
+              <button onClick={() => { setTwoFAEnabled(false); setShow2FAModal(false); }} className="btn-secondary" style={{ marginTop: '16px', padding: '10px 20px', color: '#ff6b6b', borderColor: 'rgba(255,107,107,0.3)' }}>Disable 2FA</button>
+            </div>
+          ) : (
+            <>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '20px' }}>
+                Two-factor authentication adds an extra layer of security to your account. Once enabled, you'll need to enter a code from your authenticator app when logging in.
+              </p>
+              <div style={{ background: 'rgba(0,240,255,0.06)', border: '1px solid rgba(0,240,255,0.2)', borderRadius: '10px', padding: '16px', marginBottom: '20px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                💡 You will need an authenticator app like Google Authenticator or Authy.
+              </div>
+              <button onClick={handleEnable2FA} className="btn-primary" style={{ width: '100%', padding: '12px' }}>Enable 2FA</button>
+            </>
+          )}
+        </Modal>
+      )}
+
+      {/* ── Page Header ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
         <div>
           <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>PROFILE SETTINGS</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Manage your personal information and preferences.</p>
         </div>
-        <button onClick={handleSave} className="btn-primary" disabled={isSaving}>
-          <Save size={16} style={{ marginRight: '8px' }} />
-          {isSaving ? 'SAVING...' : 'SAVE CHANGES'}
+        <button onClick={handleSave} className="btn-primary" disabled={isSaving} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {saved ? <CheckCircle size={16} /> : <Save size={16} />}
+          {isSaving ? 'SAVING...' : saved ? 'SAVED!' : 'SAVE CHANGES'}
         </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '32px' }}>
-        
-        {/* Left Column: Avatar & Quick Stats */}
+
+        {/* ── Left Column ── */}
         <div className="profile-section" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div className="card" style={{ padding: '32px', textAlign: 'center' }}>
-            <div style={{ 
-              width: '120px', 
-              height: '120px', 
-              borderRadius: '50%', 
-              background: 'var(--accent-soft)', 
-              border: '2px solid var(--accent)', 
-              margin: '0 auto 24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--accent)',
-              fontSize: '3rem',
-              fontWeight: 700,
-              position: 'relative'
-            }}>
-              {user?.name?.[0]?.toUpperCase()}
-              <button style={{
-                position: 'absolute',
-                bottom: '0',
-                right: '0',
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                background: 'var(--bg-elevated)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
+
+            {/* Avatar */}
+            <div style={{ position: 'relative', width: '120px', margin: '0 auto 24px' }}>
+              <div style={{
+                width: '120px', height: '120px', borderRadius: '50%',
+                background: avatar ? 'transparent' : 'var(--accent-soft)',
+                border: '2px solid var(--accent)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--accent)', fontSize: '3rem', fontWeight: 700,
+                overflow: 'hidden',
               }}>
+                {avatar
+                  ? <img src={avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : (user?.name?.[0]?.toUpperCase() || 'U')}
+              </div>
+
+              {/* Camera button */}
+              <button
+                onClick={handleAvatarClick}
+                title="Upload profile photo"
+                style={{
+                  position: 'absolute', bottom: 0, right: 0,
+                  width: '36px', height: '36px', borderRadius: '50%',
+                  background: 'var(--bg-elevated, #1a1a1f)',
+                  border: '2px solid var(--accent)',
+                  color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', transition: 'background 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-soft)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-elevated, #1a1a1f)'}
+              >
                 <Camera size={16} />
               </button>
+              <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
             </div>
-            <h2 style={{ fontSize: '1.2rem', marginBottom: '4px' }}>{user?.name}</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>Student • Computer Science</p>
+
+            {avatar && (
+              <button
+                onClick={() => setAvatar(null)}
+                style={{ fontSize: '0.78rem', color: '#ff6b6b', background: 'transparent', border: 'none', cursor: 'pointer', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px', margin: '0 auto 8px' }}
+              >
+                <X size={12} /> Remove photo
+              </button>
+            )}
+
+            <h2 style={{ fontSize: '1.2rem', marginBottom: '4px' }}>{firstName} {lastName}</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>{department}</p>
             <div style={{ display: 'inline-block', padding: '4px 12px', background: 'var(--overlay-soft)', borderRadius: '100px', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
               ID: STU-849201
             </div>
           </div>
 
+          {/* Security Card */}
           <div className="card" style={{ padding: '24px' }}>
             <h3 style={{ fontSize: '1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Shield size={16} color="var(--accent)" /> Security
@@ -91,67 +247,90 @@ const Profile = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>Two-Factor Auth</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Not configured</div>
+                <div style={{ fontSize: '0.8rem', color: twoFAEnabled ? '#1dd1a1' : 'var(--text-muted)' }}>
+                  {twoFAEnabled ? '✓ Enabled' : 'Not configured'}
+                </div>
               </div>
-              <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>Enable</button>
+              <button
+                className="btn-secondary"
+                style={{ padding: '6px 12px', fontSize: '0.8rem', color: twoFAEnabled ? '#ff6b6b' : undefined }}
+                onClick={() => setShow2FAModal(true)}
+              >
+                {twoFAEnabled ? 'Manage' : 'Enable'}
+              </button>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>Password</div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Last changed 3 months ago</div>
               </div>
-              <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>Update</button>
+              <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => setShowPwModal(true)}>
+                Update
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Forms */}
+        {/* ── Right Column ── */}
         <div className="profile-section" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
+
+          {/* Personal Info */}
           <div className="card" style={{ padding: '32px' }}>
             <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '16px' }}>Personal Information</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>First Name</label>
-                <input type="text" defaultValue={user?.name?.split(' ')[0]} style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }} />
+            <form onSubmit={handleSave}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>First Name</label>
+                  <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
+                    style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Last Name</label>
+                  <input type="text" value={lastName} onChange={e => setLastName(e.target.value)}
+                    style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Email Address</label>
+                  <input type="email" value={user?.email} disabled
+                    style={{ width: '100%', padding: '12px 16px', background: 'var(--overlay-subtle)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-muted)', outline: 'none', cursor: 'not-allowed', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Phone Number</label>
+                  <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                    style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Department / Major</label>
+                  <select value={department} onChange={e => setDepartment(e.target.value)}
+                    style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }}>
+                    <option>Computer Science</option>
+                    <option>Engineering</option>
+                    <option>Business</option>
+                    <option>Arts</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Last Name</label>
-                <input type="text" defaultValue={user?.name?.split(' ')[1] || ''} style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }} />
-              </div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Email Address</label>
-                <input type="email" defaultValue={user?.email} disabled style={{ width: '100%', padding: '12px 16px', background: 'var(--overlay-subtle)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-muted)', outline: 'none', cursor: 'not-allowed' }} />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Phone Number</label>
-                <input type="tel" defaultValue="+1 (555) 123-4567" style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }} />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Department / Major</label>
-                <select style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }}>
-                  <option>Computer Science</option>
-                  <option>Engineering</option>
-                  <option>Business</option>
-                  <option>Arts</option>
-                </select>
-              </div>
-            </div>
+            </form>
           </div>
 
+          {/* Notification Prefs */}
           <div className="card" style={{ padding: '32px' }}>
             <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Bell size={18} /> Notification Preferences
             </h3>
-            
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {[
-                { title: 'Appointment Reminders', desc: 'Receive emails 24 hours before your appointment.', default: true },
-                { title: 'Status Updates', desc: 'Get notified when an agent accepts, completes, or cancels a booking.', default: true },
-                { title: 'System Announcements', desc: 'Important network and system maintenance alerts.', default: false },
-              ].map((pref, i) => (
-                <label key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', cursor: 'pointer' }}>
-                  <input type="checkbox" defaultChecked={pref.default} style={{ marginTop: '4px', accentColor: 'var(--accent)', width: '16px', height: '16px' }} />
+                { key: 'reminders', title: 'Appointment Reminders', desc: 'Receive emails 24 hours before your appointment.' },
+                { key: 'status',    title: 'Status Updates',        desc: 'Get notified when an agent accepts, completes, or cancels a booking.' },
+                { key: 'announcements', title: 'System Announcements', desc: 'Important network and system maintenance alerts.' },
+              ].map(pref => (
+                <label key={pref.key} style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={notifPrefs[pref.key]}
+                    onChange={() => setNotifPrefs(prev => ({ ...prev, [pref.key]: !prev[pref.key] }))}
+                    style={{ marginTop: '4px', accentColor: 'var(--accent)', width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
                   <div>
                     <div style={{ fontSize: '0.95rem', fontWeight: 500, marginBottom: '2px' }}>{pref.title}</div>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{pref.desc}</div>

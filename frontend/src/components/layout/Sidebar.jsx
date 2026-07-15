@@ -10,7 +10,9 @@ import {
   Activity, 
   FileText,
   Shield,
-  Briefcase
+  Briefcase,
+  Ticket,
+  Bell
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -25,11 +27,14 @@ const Sidebar = () => {
       { name: 'Dashboard', path: '/dashboard/user', icon: <LayoutDashboard size={18} /> },
       { name: 'Book Appointment', path: '/dashboard/user/book', icon: <Calendar size={18} /> },
       { name: 'My Appointments', path: '/dashboard/user/appointments', icon: <Clock size={18} /> },
+      { name: 'My Tickets', path: '/dashboard/user/tickets', icon: <Ticket size={18} /> },
+      { name: 'Notifications', path: '/dashboard/user/notifications', icon: <Bell size={18} /> },
       { name: 'Profile', path: '/dashboard/user/profile', icon: <Settings size={18} /> },
     ],
     agent: [
       { name: 'Dashboard', path: '/dashboard/agent', icon: <LayoutDashboard size={18} /> },
       { name: 'Appointments', path: '/dashboard/agent/appointments', icon: <Calendar size={18} /> },
+      { name: 'Assigned Tickets', path: '/dashboard/agent/tickets', icon: <Ticket size={18} /> },
       { name: 'Availability', path: '/dashboard/agent/availability', icon: <Clock size={18} /> },
     ],
     admin: [

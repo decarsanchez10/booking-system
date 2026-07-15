@@ -3,12 +3,15 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useAuth } from '../context/AuthContext';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const Signup = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('user');
+  const [captchaValue, setCaptchaValue] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
@@ -16,7 +19,13 @@ const Signup = () => {
   const location = useLocation();
   const container = useRef();
 
-  const from = location.state?.from || '/slots';
+  const getDashboardPath = (role) => {
+    if (role === 'admin') return '/dashboard/admin';
+    if (role === 'agent') return '/dashboard/agent';
+    return '/dashboard/user';
+  };
+
+  const from = location.state?.from || null;
 
   useGSAP(() => {
     gsap.from('.signup-card', { opacity: 0, y: 20, duration: 0.6, ease: 'power3.out' });
@@ -36,10 +45,16 @@ const Signup = () => {
       return;
     }
 
+    if (!captchaValue) {
+      setError('Please verify you are not a robot');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await signup(name, email, password);
-      navigate(from, { replace: true });
+      const userData = await signup(name, email, password, role);
+      const dest = from || getDashboardPath(userData.role);
+      navigate(dest, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -227,6 +242,74 @@ const Signup = () => {
                   outline: 'none',
                   transition: 'all 0.3s ease'
                 }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '10px', 
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.7rem',
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '1px'
+              }}>Account Type</label>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <label style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '12px',
+                  background: role === 'user' ? 'rgba(0, 240, 255, 0.1)' : 'var(--bg)',
+                  border: role === 'user' ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  borderRadius: 'var(--radius-xs)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  color: role === 'user' ? 'var(--accent)' : 'var(--text-primary)'
+                }}>
+                  <input 
+                    type="radio" 
+                    name="role" 
+                    value="user" 
+                    checked={role === 'user'} 
+                    onChange={() => setRole('user')}
+                    style={{ display: 'none' }}
+                  />
+                  User (Student/Staff)
+                </label>
+                <label style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '12px',
+                  background: role === 'agent' ? 'rgba(0, 240, 255, 0.1)' : 'var(--bg)',
+                  border: role === 'agent' ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  borderRadius: 'var(--radius-xs)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  color: role === 'agent' ? 'var(--accent)' : 'var(--text-primary)'
+                }}>
+                  <input 
+                    type="radio" 
+                    name="role" 
+                    value="agent" 
+                    checked={role === 'agent'} 
+                    onChange={() => setRole('agent')}
+                    style={{ display: 'none' }}
+                  />
+                  IT Support Agent
+                </label>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'center' }}>
+              <ReCAPTCHA
+                sitekey="6LeUWlQtAAAAAIoHexsoNB6orG3wn6wF5GkMQlgb"
+                onChange={(val) => setCaptchaValue(val)}
+                theme="dark"
               />
             </div>
 
