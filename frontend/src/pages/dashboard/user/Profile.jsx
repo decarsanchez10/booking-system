@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useAuth } from '../../../context/AuthContext';
-import { Camera, Shield, Bell, Save, X, Eye, EyeOff, CheckCircle, Upload } from 'lucide-react';
+import { Camera, Shield, Bell, Save, X, Eye, EyeOff, CheckCircle } from 'lucide-react';
 
 /* ── tiny re-usable modal ─────────────────────────── */
 const Modal = ({ title, children, onClose }) => (
@@ -28,7 +28,7 @@ const Modal = ({ title, children, onClose }) => (
 );
 
 const Profile = () => {
-  const { user, login } = useAuth();
+  const { user } = useAuth();
 
   /* form state */
   const [firstName, setFirstName] = useState(user?.name?.split(' ')[0] || '');

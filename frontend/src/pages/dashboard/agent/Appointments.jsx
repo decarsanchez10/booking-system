@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Search, Filter, CheckCircle, XCircle, Clock, MoreHorizontal } from 'lucide-react';
+import { Search, Filter, CheckCircle, XCircle, MoreHorizontal } from 'lucide-react';
 
 const MOCK_QUEUE = [
   { id: 'APT-1048', name: 'Alex Rivera', issue: 'Network Troubleshooting', date: 'Today', time: '10:00 AM', status: 'active', type: 'Network' },
@@ -15,6 +15,7 @@ const getStatusBadge = (status) => {
   switch(status) {
     case 'active': return <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.2)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>Active</span>;
     case 'pending': return <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', border: '1px solid rgba(234, 179, 8, 0.2)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>Pending</span>;
+    case 'rejected': return <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>Rejected</span>;
     case 'completed': return <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', background: 'var(--overlay-soft)', color: 'var(--text-secondary)', border: '1px solid var(--border)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>Completed</span>;
     default: return null;
   }
@@ -23,6 +24,11 @@ const getStatusBadge = (status) => {
 const Appointments = () => {
   const container = useRef();
   const [filter, setFilter] = useState('all');
+  const [queue, setQueue] = useState(MOCK_QUEUE);
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [showTypeFilter, setShowTypeFilter] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   useGSAP(() => {
     gsap.from('.table-row', {
@@ -34,7 +40,17 @@ const Appointments = () => {
     });
   }, { scope: container, dependencies: [filter] });
 
-  const filteredQueue = MOCK_QUEUE.filter(apt => filter === 'all' || apt.status === filter);
+  const filteredQueue = queue.filter(apt => {
+    const matchesStatus = filter === 'all' || apt.status === filter;
+    const matchesType = typeFilter === 'all' || apt.type.toLowerCase() === typeFilter;
+    const term = search.toLowerCase();
+    const matchesSearch = !term || apt.id.toLowerCase().includes(term) || apt.name.toLowerCase().includes(term) || apt.issue.toLowerCase().includes(term);
+    return matchesStatus && matchesType && matchesSearch;
+  });
+
+  const updateStatus = (id, status) => {
+    setQueue(prev => prev.map(apt => apt.id === id ? { ...apt, status } : apt));
+  };
 
   return (
     <div ref={container}>
@@ -49,7 +65,7 @@ const Appointments = () => {
         {/* Toolbar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div style={{ display: 'flex', gap: '8px' }}>
-            {['all', 'active', 'pending', 'completed'].map(f => (
+            {['all', 'active', 'pending', 'completed', 'rejected'].map(f => (
               <button 
                 key={f}
                 onClick={() => setFilter(f)}
@@ -74,13 +90,35 @@ const Appointments = () => {
           <div style={{ display: 'flex', gap: '12px' }}>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input type="text" placeholder="Search ID or Name..." style={{ padding: '8px 16px 8px 36px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.85rem', width: '250px' }} />
+              <input type="text" placeholder="Search ID or Name..." value={search} onChange={e => setSearch(e.target.value)} style={{ padding: '8px 16px 8px 36px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.85rem', width: '250px' }} />
             </div>
-            <button className="btn-secondary" style={{ padding: '8px 12px' }}>
+            <button className="btn-secondary" type="button" onClick={() => setShowTypeFilter(prev => !prev)} style={{ padding: '8px 12px' }}>
               <Filter size={16} /> Filter
             </button>
           </div>
         </div>
+        {showTypeFilter && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', margin: '-12px 0 20px' }}>
+            {['all', 'hardware', 'software', 'network'].map(type => (
+              <button
+                key={type}
+                onClick={() => setTypeFilter(type)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '100px',
+                  border: '1px solid',
+                  borderColor: typeFilter === type ? 'var(--accent-border)' : 'var(--border)',
+                  background: typeFilter === type ? 'var(--accent-soft)' : 'transparent',
+                  color: typeFilter === type ? 'var(--accent)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  textTransform: 'capitalize',
+                }}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Table */}
         <div style={{ width: '100%', overflowX: 'auto' }}>
@@ -113,14 +151,14 @@ const Appointments = () => {
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                       {apt.status === 'pending' && (
                         <>
-                          <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.75rem', color: '#22c55e', borderColor: 'rgba(34, 197, 94, 0.3)' }}><CheckCircle size={14} style={{ marginRight: '4px' }}/> Accept</button>
-                          <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.75rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}><XCircle size={14} style={{ marginRight: '4px' }}/> Reject</button>
+                          <button onClick={() => updateStatus(apt.id, 'active')} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.75rem', color: '#22c55e', borderColor: 'rgba(34, 197, 94, 0.3)' }}><CheckCircle size={14} style={{ marginRight: '4px' }}/> Accept</button>
+                          <button onClick={() => updateStatus(apt.id, 'rejected')} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.75rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}><XCircle size={14} style={{ marginRight: '4px' }}/> Reject</button>
                         </>
                       )}
                       {apt.status === 'active' && (
-                        <button className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.75rem', background: '#22c55e' }}>Complete</button>
+                        <button onClick={() => updateStatus(apt.id, 'completed')} className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.75rem', background: '#22c55e' }}>Complete</button>
                       )}
-                      <button className="btn-secondary" style={{ padding: '6px', width: '30px' }}><MoreHorizontal size={14}/></button>
+                      <button onClick={() => setSelectedAppointment(apt)} className="btn-secondary" style={{ padding: '6px', width: '30px' }}><MoreHorizontal size={14}/></button>
                     </div>
                   </td>
                 </tr>
@@ -130,14 +168,24 @@ const Appointments = () => {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Showing {filteredQueue.length} of {MOCK_QUEUE.length} entries</div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Showing {filteredQueue.length} of {queue.length} entries</div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} disabled>Previous</button>
-            <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>Next</button>
+            <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} disabled>Next</button>
           </div>
         </div>
 
       </div>
+      {selectedAppointment && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setSelectedAppointment(null)}>
+          <div className="card" style={{ padding: '28px', width: '100%', maxWidth: '420px' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginBottom: '16px' }}>{selectedAppointment.id}</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>{selectedAppointment.name}</p>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>{selectedAppointment.issue} · {selectedAppointment.date} at {selectedAppointment.time}</p>
+            <button className="btn-primary" onClick={() => setSelectedAppointment(null)} style={{ width: '100%', padding: '10px' }}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

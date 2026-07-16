@@ -119,8 +119,6 @@ const Home = () => {
                   Browse Slots
                 </Link>
               </div>
-
-
             </div>
 
             <div className="hero-visual">
@@ -358,11 +356,20 @@ const Home = () => {
           </div>
 
           <div className="why-grid">
-            <img
-              src="/hero-illustration.png"
-              alt="Obsidian Help Desk technology"
-              className="why-image"
-            />
+            <div className="why-summary">
+              <div className="section-label">// PLATFORM OVERVIEW</div>
+              <h3>Built for fast campus IT support.</h3>
+              <p>
+                Obsidian keeps appointment booking, ticket tracking, agent schedules,
+                and support updates in one place so students and staff know exactly
+                where their request stands.
+              </p>
+              <div className="why-checklist">
+                <span>Centralized appointment scheduling</span>
+                <span>Role-based user, agent, and admin dashboards</span>
+                <span>Live support visibility and ticket history</span>
+              </div>
+            </div>
             <div className="why-stats">
               <div className="why-stat">
                 <div className="why-stat-value">5,000+</div>

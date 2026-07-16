@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle, X, Ticket, BookOpen, Calendar, Phone, ChevronRight } from 'lucide-react';
 

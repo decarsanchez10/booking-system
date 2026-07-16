@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Search, BookOpen, HelpCircle, Play, ChevronRight, TrendingUp, Tag } from 'lucide-react';
+import { Search, BookOpen, HelpCircle, Play, ChevronRight, TrendingUp } from 'lucide-react';
 
 const categories = [
   { label: 'Getting Started', count: 8, color: '#6C63FF' },
@@ -150,7 +150,7 @@ const KnowledgeBase = () => {
                 borderRadius: '14px',
                 cursor: 'pointer',
                 textAlign: 'left',
-                transition: 'all 0.2s',
+                transition: 'background-color 0.2s, border-color 0.2s, transform 0.2s',
               }}
             >
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color, marginBottom: '12px' }} />
@@ -188,7 +188,7 @@ const KnowledgeBase = () => {
                 borderRadius: '14px',
                 padding: '24px',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'background-color 0.2s, border-color 0.2s, transform 0.2s',
               }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,240,255,0.3)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}

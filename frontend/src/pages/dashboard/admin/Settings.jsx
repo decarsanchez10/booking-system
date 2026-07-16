@@ -7,6 +7,7 @@ const Settings = () => {
   const container = useRef();
   const [activeTab, setActiveTab] = useState('organization');
   const [isSaving, setIsSaving] = useState(false);
+  const [keyRotated, setKeyRotated] = useState(false);
 
   useGSAP(() => {
     gsap.from('.settings-content', {
@@ -20,6 +21,11 @@ const Settings = () => {
   const handleSave = () => {
     setIsSaving(true);
     setTimeout(() => setIsSaving(false), 1000);
+  };
+
+  const handleRotateKey = () => {
+    setKeyRotated(true);
+    setTimeout(() => setKeyRotated(false), 1600);
   };
 
   const TABS = [
@@ -115,7 +121,9 @@ const Settings = () => {
                   <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>JWT Secret Key</label>
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <input type="password" defaultValue="************************" disabled style={{ flex: 1, padding: '12px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-muted)', outline: 'none' }} />
-                    <button className="btn-secondary" style={{ padding: '0 24px' }}>Rotate Key</button>
+                    <button type="button" onClick={handleRotateKey} className="btn-secondary" style={{ padding: '0 24px' }}>
+                      {keyRotated ? 'Key Rotated' : 'Rotate Key'}
+                    </button>
                   </div>
                 </div>
                 <div>

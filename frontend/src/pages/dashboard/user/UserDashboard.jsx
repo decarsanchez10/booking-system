@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useAuth } from '../../../context/AuthContext';
-import { Calendar, Clock, ArrowRight, Monitor, Wifi, Database } from 'lucide-react';
+import { Calendar, ArrowRight, Monitor, Wifi, Database } from 'lucide-react';
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -75,8 +75,8 @@ const UserDashboard = () => {
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Hardware Specialist</div>
               </div>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-                <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>Reschedule</button>
-                <button className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>Join Meeting</button>
+                <Link to="/dashboard/user/appointments" className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>Reschedule</Link>
+                <a className="btn-primary" href="https://meet.google.com/" target="_blank" rel="noreferrer" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>Join Meeting</a>
               </div>
             </div>
           </div>

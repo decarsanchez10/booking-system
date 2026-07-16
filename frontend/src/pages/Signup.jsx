@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useAuth } from '../context/AuthContext';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { CheckCircle } from 'lucide-react';
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -14,16 +15,10 @@ const Signup = () => {
   const [captchaValue, setCaptchaValue] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [createdAccount, setCreatedAccount] = useState(null);
   const { signup } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const container = useRef();
-
-  const getDashboardPath = (role) => {
-    if (role === 'admin') return '/dashboard/admin';
-    if (role === 'agent') return '/dashboard/agent';
-    return '/dashboard/user';
-  };
 
   const from = location.state?.from || null;
 
@@ -40,8 +35,8 @@ const Signup = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
       return;
     }
 
@@ -53,8 +48,7 @@ const Signup = () => {
     setIsLoading(true);
     try {
       const userData = await signup(name, email, password, role);
-      const dest = from || getDashboardPath(userData.role);
-      navigate(dest, { replace: true });
+      setCreatedAccount(userData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -105,6 +99,24 @@ const Signup = () => {
             </p>
           </div>
 
+          {createdAccount ? (
+            <div style={{ textAlign: 'center' }}>
+              <CheckCircle size={56} color="#22c55e" style={{ marginBottom: '18px' }} />
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '10px' }}>Account Created</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '24px' }}>
+                Your {createdAccount.role === 'agent' ? 'IT support agent' : 'user'} account is ready. You can now log in with your email and password.
+              </p>
+              <Link
+                to="/login"
+                state={{ from }}
+                className="btn-primary btn-large"
+                style={{ display: 'inline-flex', width: '100%', justifyContent: 'center', textDecoration: 'none' }}
+              >
+                Go to Login
+              </Link>
+            </div>
+          ) : (
+            <>
           {error && (
             <div style={{
               padding: '12px 16px',
@@ -197,7 +209,7 @@ const Signup = () => {
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min 6 characters"
+                placeholder="Min 8 characters"
                 required
                 style={{
                   width: '100%',
@@ -334,6 +346,8 @@ const Signup = () => {
               Log In
             </Link>
           </p>
+            </>
+          )}
         </div>
       </div>
     </div>

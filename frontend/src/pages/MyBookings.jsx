@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
@@ -9,6 +9,7 @@ const MY_BOOKINGS = [
 
 const MyBookings = () => {
   const container = useRef();
+  const [bookings, setBookings] = useState(MY_BOOKINGS);
 
   useGSAP(() => {
     gsap.from('.booking-item', { 
@@ -25,11 +26,11 @@ const MyBookings = () => {
       <h1 style={{ marginBottom: '1rem' }}>My Bookings</h1>
       <div className="glowing-divider"></div>
       
-      {MY_BOOKINGS.length === 0 ? (
+      {bookings.length === 0 ? (
         <p className="mono-text">No active bookings found.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {MY_BOOKINGS.map(booking => (
+          {bookings.map(booking => (
             <div key={booking.id} className="card booking-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -52,7 +53,13 @@ const MyBookings = () => {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <p className="mono-text" style={{ color: '#666', marginBottom: '0.5rem' }}>ID: {booking.id}</p>
-                <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>CANCEL</button>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setBookings(prev => prev.filter(item => item.id !== booking.id))}
+                  style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
+                >
+                  CANCEL
+                </button>
               </div>
             </div>
           ))}

@@ -10,7 +10,11 @@ const Contact = () => {
   const [loading, setLoading] = useState(false);
 
   useGSAP(() => {
-    gsap.from('.contact-card', { opacity: 0, y: 30, duration: 0.6, stagger: 0.1, ease: 'power3.out' });
+    gsap.fromTo(
+      '.contact-card',
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.45, stagger: 0.06, ease: 'power3.out', clearProps: 'transform' }
+    );
   }, { scope: container });
 
   const handleSubmit = (e) => {
@@ -55,10 +59,12 @@ const Contact = () => {
                   alignItems: 'flex-start',
                   gap: '16px',
                   padding: '24px',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid var(--border)',
+                  background: 'rgba(255,255,255,0.055)',
+                  border: '1px solid var(--border-hover)',
                   borderRadius: '14px',
                   transition: 'all 0.2s',
+                  color: 'var(--text-primary)',
+                  opacity: 1,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,240,255,0.3)'; e.currentTarget.style.transform = 'translateX(4px)'; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateX(0)'; }}>
@@ -66,7 +72,8 @@ const Contact = () => {
                     width: '44px',
                     height: '44px',
                     borderRadius: '12px',
-                    background: 'rgba(0,240,255,0.1)',
+                    background: 'rgba(139,92,246,0.16)',
+                    border: '1px solid var(--accent-border)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -75,9 +82,9 @@ const Contact = () => {
                     <Icon size={20} color="var(--accent)" />
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>{item.label}</div>
-                    <div style={{ fontWeight: 600, marginBottom: '2px' }}>{item.value}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{item.sub}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>{item.label}</div>
+                    <div style={{ fontWeight: 700, marginBottom: '2px', color: 'var(--text-primary)' }}>{item.value}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{item.sub}</div>
                   </div>
                 </div>
               );

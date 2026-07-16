@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Calendar, Clock, Monitor, Wifi, Database, Search, Filter, MoreVertical, CheckCircle, XCircle, AlertCircle, X, ChevronDown } from 'lucide-react';
+import { Calendar, Clock, Monitor, Wifi, Database, Search, MoreVertical, CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
 
 const INITIAL_APPOINTMENTS = [
   { id: 'APT-1042', agent: 'Sarah Jenkins', type: 'Hardware', date: 'Today', time: '02:30 PM', status: 'upcoming', issue: 'MacBook Pro Battery Replacement Consultation' },
@@ -55,10 +55,21 @@ const Appointments = () => {
   const [newDate, setNewDate] = useState('');
   const [newTime, setNewTime] = useState('');
 
+  // View Ticket modal
+  const [viewTicketTarget, setViewTicketTarget] = useState(null);
+
   const container = useRef();
   useGSAP(() => {
     gsap.from('.apt-card', { opacity: 0, x: -20, stagger: 0.1, duration: 0.5, ease: 'power2.out' });
   }, { scope: container, dependencies: [filter] });
+
+  // Close kebab menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = () => setMenuOpen(null);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [menuOpen]);
 
   const filtered = appointments.filter(apt => {
     const matchFilter = filter === 'all' || apt.status === filter;
@@ -93,6 +104,40 @@ const Appointments = () => {
             <button className="btn-secondary" style={{ flex: 1, padding: '12px' }} onClick={() => setCancelTarget(null)}>Keep Appointment</button>
             <button style={{ flex: 1, padding: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 'var(--radius-xs)', color: '#ef4444', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleCancel(cancelTarget)}>Yes, Cancel</button>
           </div>
+        </Modal>
+      )}
+
+      {/* View Ticket Modal */}
+      {viewTicketTarget && (
+        <Modal title={`Appointment ${viewTicketTarget.id}`} onClose={() => setViewTicketTarget(null)}>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Issue</div>
+            <div style={{ fontWeight: 600, fontSize: '1.05rem' }}>{viewTicketTarget.issue}</div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Agent</div>
+              <div style={{ fontWeight: 600 }}>{viewTicketTarget.agent}</div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Type</div>
+              <div style={{ fontWeight: 600 }}>{viewTicketTarget.type}</div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Date</div>
+              <div style={{ fontWeight: 600 }}>{viewTicketTarget.date}</div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Time</div>
+              <div style={{ fontWeight: 600 }}>{viewTicketTarget.time}</div>
+            </div>
+          </div>
+          <div style={{ padding: '12px 16px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '10px', color: '#22c55e', fontSize: '0.9rem', marginBottom: '20px' }}>
+            ✅ This appointment has been completed successfully.
+          </div>
+          <button className="btn-primary" style={{ width: '100%', padding: '12px' }} onClick={() => setViewTicketTarget(null)}>
+            Close
+          </button>
         </Modal>
       )}
 
@@ -205,11 +250,52 @@ const Appointments = () => {
                     </>
                   )}
                   {apt.status === 'completed' && (
-                    <button className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>View Ticket</button>
+                    <button className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.8rem' }}
+                      onClick={() => setViewTicketTarget(apt)}>View Ticket</button>
                   )}
-                  <button style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                    <MoreVertical size={16} />
-                  </button>
+                  {/* Three-dot menu */}
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === apt.id ? null : apt.id); }}
+                      style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                      <MoreVertical size={16} />
+                    </button>
+                    {menuOpen === apt.id && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ position: 'absolute', right: 0, top: '44px', background: '#1a1a22', border: '1px solid var(--border)', borderRadius: '12px', padding: '6px', zIndex: 100, minWidth: '180px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+                        {(apt.status === 'upcoming' || apt.status === 'pending') && (
+                          <>
+                            <button onClick={() => { setRescheduleTarget(apt.id); setMenuOpen(null); }}
+                              style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.875rem', cursor: 'pointer', textAlign: 'left', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                              📅 Reschedule
+                            </button>
+                            <button onClick={() => { setCancelTarget(apt.id); setMenuOpen(null); }}
+                              style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', color: '#ef4444', fontSize: '0.875rem', cursor: 'pointer', textAlign: 'left', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                              ✕ Cancel Appointment
+                            </button>
+                          </>
+                        )}
+                        {apt.status === 'completed' && (
+                          <button onClick={() => { setViewTicketTarget(apt); setMenuOpen(null); }}
+                            style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.875rem', cursor: 'pointer', textAlign: 'left', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                            🎫 View Ticket
+                          </button>
+                        )}
+                        {apt.status === 'cancelled' && (
+                          <div style={{ padding: '10px 14px', color: 'var(--text-muted)', fontSize: '0.875rem' }}>No actions available</div>
+                        )}
+                        <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                        <div style={{ padding: '10px 14px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {apt.id}</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

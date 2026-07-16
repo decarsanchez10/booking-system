@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Search, Filter, Star, Clock, User, X } from 'lucide-react';
+import { Search, Star, Clock, User, X } from 'lucide-react';
 
 // Mock Data
 const MOCK_AGENTS = [
@@ -15,6 +15,10 @@ const MOCK_AGENTS = [
 const BookAppointment = () => {
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [specialty, setSpecialty] = useState('');
+  const [timeOfDay, setTimeOfDay] = useState('');
+  const [issueType, setIssueType] = useState('');
+  const [filtersApplied, setFiltersApplied] = useState(false);
   const container = useRef();
   const modalRef = useRef();
 
@@ -64,6 +68,15 @@ const BookAppointment = () => {
     });
   };
 
+  const filteredAgents = MOCK_AGENTS.filter(agent => {
+    if (filtersApplied && specialty && agent.specialty.toLowerCase() !== specialty) return false;
+    if (filtersApplied && issueType === 'repair' && agent.specialty !== 'Hardware') return false;
+    if (filtersApplied && issueType === 'setup' && !['Software', 'Account'].includes(agent.specialty)) return false;
+    if (filtersApplied && timeOfDay === 'morning' && agent.slots < 8) return false;
+    if (filtersApplied && timeOfDay === 'afternoon' && agent.slots < 4) return false;
+    return true;
+  });
+
   return (
     <div ref={container} style={{ position: 'relative' }}>
       <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>BOOK APPOINTMENT</h1>
@@ -74,7 +87,7 @@ const BookAppointment = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: '16px', alignItems: 'end' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Specialty</label>
-            <select style={{ width: '100%', padding: '10px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }}>
+            <select value={specialty} onChange={e => setSpecialty(e.target.value)} style={{ width: '100%', padding: '10px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }}>
               <option value="">All Specialties</option>
               <option value="hardware">Hardware</option>
               <option value="software">Software</option>
@@ -87,7 +100,7 @@ const BookAppointment = () => {
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Time</label>
-            <select style={{ width: '100%', padding: '10px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }}>
+            <select value={timeOfDay} onChange={e => setTimeOfDay(e.target.value)} style={{ width: '100%', padding: '10px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }}>
               <option value="">Any Time</option>
               <option value="morning">Morning</option>
               <option value="afternoon">Afternoon</option>
@@ -95,13 +108,13 @@ const BookAppointment = () => {
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Issue Type</label>
-            <select style={{ width: '100%', padding: '10px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }}>
+            <select value={issueType} onChange={e => setIssueType(e.target.value)} style={{ width: '100%', padding: '10px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }}>
               <option value="">Select Issue</option>
               <option value="repair">Repair</option>
               <option value="setup">Setup</option>
             </select>
           </div>
-          <button className="btn-primary" style={{ height: '42px', padding: '0 24px' }}>
+          <button className="btn-primary" type="button" onClick={() => setFiltersApplied(true)} style={{ height: '42px', padding: '0 24px' }}>
             <Search size={18} />
           </button>
         </div>
@@ -109,7 +122,7 @@ const BookAppointment = () => {
 
       {/* Agents Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
-        {MOCK_AGENTS.map((agent) => (
+        {filteredAgents.map((agent) => (
           <div key={agent.id} className="book-card card glowing-border" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div style={{ display: 'flex', gap: '16px' }}>
@@ -140,6 +153,11 @@ const BookAppointment = () => {
             </button>
           </div>
         ))}
+        {filteredAgents.length === 0 && (
+          <div className="card" style={{ padding: '32px', color: 'var(--text-secondary)', gridColumn: '1 / -1', textAlign: 'center' }}>
+            No agents match those filters.
+          </div>
+        )}
       </div>
 
       {/* Booking Modal */}

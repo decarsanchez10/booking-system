@@ -1,42 +1,36 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthProvider';
+import { ThemeProvider } from './context/ThemeProvider';
 import RoleRoute from './components/RoleRoute';
 
-// Public Pages
-import Home from './pages/Home';
-import Services from './pages/Services';
-import KnowledgeBase from './pages/KnowledgeBase';
-import Contact from './pages/Contact';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import ForgotPassword from './pages/ForgotPassword';
-import NotFound from './pages/NotFound';
 import Navbar from './components/Navbar';
 import FloatingSupportButton from './components/FloatingSupportButton';
-
-// Layouts
 import DashboardLayout from './components/layout/DashboardLayout';
 
-// User Dashboard Pages
-import UserDashboard from './pages/dashboard/user/UserDashboard';
-import BookAppointment from './pages/dashboard/user/BookAppointment';
-import UserAppointments from './pages/dashboard/user/Appointments';
-import MyTickets from './pages/dashboard/user/MyTickets';
-import UserNotifications from './pages/dashboard/user/Notifications';
-import UserProfile from './pages/dashboard/user/Profile';
-
-// Agent Dashboard Pages
-import AgentDashboard from './pages/dashboard/agent/AgentDashboard';
-import AgentAppointments from './pages/dashboard/agent/Appointments';
-import AssignedTickets from './pages/dashboard/agent/AssignedTickets';
-import AgentAvailability from './pages/dashboard/agent/Availability';
-
-// Admin Dashboard Pages
-import AdminDashboard from './pages/dashboard/admin/AdminDashboard';
-import AdminUsers from './pages/dashboard/admin/Users';
-import AdminAgents from './pages/dashboard/admin/Agents';
-import AdminSettings from './pages/dashboard/admin/Settings';
+const Home = lazy(() => import('./pages/Home'));
+const Services = lazy(() => import('./pages/Services'));
+const KnowledgeBase = lazy(() => import('./pages/KnowledgeBase'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Login = lazy(() => import('./pages/Login'));
+const Signup = lazy(() => import('./pages/Signup'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const UserDashboard = lazy(() => import('./pages/dashboard/user/UserDashboard'));
+const BookAppointment = lazy(() => import('./pages/dashboard/user/BookAppointment'));
+const UserAppointments = lazy(() => import('./pages/dashboard/user/Appointments'));
+const MyTickets = lazy(() => import('./pages/dashboard/user/MyTickets'));
+const UserNotifications = lazy(() => import('./pages/dashboard/user/Notifications'));
+const UserProfile = lazy(() => import('./pages/dashboard/user/Profile'));
+const AgentDashboard = lazy(() => import('./pages/dashboard/agent/AgentDashboard'));
+const AgentAppointments = lazy(() => import('./pages/dashboard/agent/Appointments'));
+const AssignedTickets = lazy(() => import('./pages/dashboard/agent/AssignedTickets'));
+const AgentAvailability = lazy(() => import('./pages/dashboard/agent/Availability'));
+const AdminDashboard = lazy(() => import('./pages/dashboard/admin/AdminDashboard'));
+const AdminUsers = lazy(() => import('./pages/dashboard/admin/Users'));
+const AdminAgents = lazy(() => import('./pages/dashboard/admin/Agents'));
+const AdminReports = lazy(() => import('./pages/dashboard/admin/Reports'));
+const AdminSettings = lazy(() => import('./pages/dashboard/admin/Settings'));
 
 const PublicLayout = ({ children }) => (
   <>
@@ -46,20 +40,27 @@ const PublicLayout = ({ children }) => (
   </>
 );
 
+const RouteFallback = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+    <div className="loading-bar"><div className="loading-bar-inner"></div></div>
+  </div>
+);
+
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
-            <Route path="/services" element={<PublicLayout><Services /></PublicLayout>} />
-            <Route path="/knowledge-base" element={<PublicLayout><KnowledgeBase /></PublicLayout>} />
-            <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
-            <Route path="/login" element={<PublicLayout><Login /></PublicLayout>} />
-            <Route path="/signup" element={<PublicLayout><Signup /></PublicLayout>} />
-            <Route path="/forgot-password" element={<PublicLayout><ForgotPassword /></PublicLayout>} />
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
+              <Route path="/services" element={<PublicLayout><Services /></PublicLayout>} />
+              <Route path="/knowledge-base" element={<PublicLayout><KnowledgeBase /></PublicLayout>} />
+              <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
+              <Route path="/login" element={<PublicLayout><Login /></PublicLayout>} />
+              <Route path="/signup" element={<PublicLayout><Signup /></PublicLayout>} />
+              <Route path="/forgot-password" element={<PublicLayout><ForgotPassword /></PublicLayout>} />
 
             {/* User Dashboard Routes */}
             <Route path="/dashboard/user" element={<RoleRoute allowedRoles={['user']}><DashboardLayout /></RoleRoute>}>
@@ -84,6 +85,7 @@ function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="agents" element={<AdminAgents />} />
+              <Route path="reports" element={<AdminReports />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
 
@@ -92,9 +94,10 @@ function App() {
             <Route path="/book/:id" element={<Navigate to="/dashboard/user/book" replace />} />
             <Route path="/my-bookings" element={<Navigate to="/dashboard/user/appointments" replace />} />
             
-            {/* Fallback */}
-            <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
-          </Routes>
+              {/* Fallback */}
+              <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
+            </Routes>
+          </Suspense>
         </Router>
       </AuthProvider>
     </ThemeProvider>
@@ -102,4 +105,3 @@ function App() {
 }
 
 export default App;
-

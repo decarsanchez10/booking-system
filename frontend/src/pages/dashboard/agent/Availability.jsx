@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Calendar as CalendarIcon, Clock, Save, Copy, Plus } from 'lucide-react';
+import { CheckCircle, Clock, Save, Copy, Plus } from 'lucide-react';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const TIME_SLOTS = ['09:00 AM', '10:00 AM', '11:00 AM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'];
@@ -17,6 +17,7 @@ const Availability = () => {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [holidayMode, setHolidayMode] = useState(false);
+  const [activeDays, setActiveDays] = useState(() => DAYS.reduce((days, day) => ({ ...days, [day]: true }), {}));
 
   useGSAP(() => {
     gsap.from('.sched-row', {
@@ -29,6 +30,7 @@ const Availability = () => {
   }, { scope: container });
 
   const toggleSlot = (day, time) => {
+    if (!activeDays[day]) return;
     setSchedule(prev => {
       const daySlots = prev[day];
       if (daySlots.includes(time)) {
@@ -45,6 +47,15 @@ const Availability = () => {
   const handleSave = () => {
     setIsSaving(true);
     setTimeout(() => setIsSaving(false), 800);
+  };
+
+  const copyToAll = (sourceDay) => {
+    setSchedule(prev => DAYS.reduce((next, day) => ({ ...next, [day]: [...prev[sourceDay]] }), prev));
+    setActiveDays(prev => DAYS.reduce((next, day) => ({ ...next, [day]: prev[sourceDay] }), prev));
+  };
+
+  const toggleDayActive = (day) => {
+    setActiveDays(prev => ({ ...prev, [day]: !prev[day] }));
   };
 
   return (
@@ -66,7 +77,7 @@ const Availability = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
           {DAYS.map((day) => (
-            <div key={day} className="sched-row card" style={{ padding: '24px', opacity: holidayMode ? 0.5 : 1, pointerEvents: holidayMode ? 'none' : 'auto', transition: 'opacity 0.3s' }}>
+            <div key={day} className="sched-row card" style={{ padding: '24px', opacity: holidayMode || !activeDays[day] ? 0.5 : 1, pointerEvents: holidayMode ? 'none' : 'auto', transition: 'opacity 0.3s' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--accent-soft)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>
@@ -75,10 +86,10 @@ const Availability = () => {
                   <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{day}</h3>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <button style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><Copy size={14}/> Copy to all</button>
+                  <button type="button" onClick={() => copyToAll(day)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}><Copy size={14}/> Copy to all</button>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Active</span>
-                    <input type="checkbox" defaultChecked={true} style={{ accentColor: 'var(--accent)', width: '16px', height: '16px' }} />
+                    <input type="checkbox" checked={activeDays[day]} onChange={() => toggleDayActive(day)} style={{ accentColor: 'var(--accent)', width: '16px', height: '16px' }} />
                   </label>
                 </div>
               </div>
@@ -90,6 +101,7 @@ const Availability = () => {
                     <button
                       key={time}
                       onClick={() => toggleSlot(day, time)}
+                      disabled={!activeDays[day]}
                       style={{
                         padding: '8px 16px',
                         background: isActive ? 'var(--accent-soft)' : 'transparent',

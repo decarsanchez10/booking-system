@@ -69,7 +69,7 @@ const Services = () => {
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: 'var(--radius)',
                 padding: '32px',
-                transition: 'all 0.3s ease',
+                transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease',
                 cursor: 'pointer',
               }}
               onMouseEnter={(e) => {

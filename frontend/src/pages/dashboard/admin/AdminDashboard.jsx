@@ -1,11 +1,10 @@
 import { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { useAuth } from '../../../context/AuthContext';
 import { Users, UserCheck, Calendar, Activity, Clock, ShieldAlert } from 'lucide-react';
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 
 const WEEKLY_DATA = [
@@ -28,7 +27,6 @@ const DEPT_DATA = [
 const COLORS = ['#8b5cf6', '#a78bfa', '#06b6d4', '#67e8f9']; // Aurora palette
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
   const container = useRef();
 
   useGSAP(() => {

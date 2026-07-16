@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Search, Filter, Edit, Trash2, Ban, X, CheckCircle, Plus } from 'lucide-react';
+import { Search, Edit, Trash2, Ban, X, CheckCircle, Plus } from 'lucide-react';
 
 /* ── Modal ── */
 const Modal = ({ title, children, onClose, width }) => (
@@ -195,7 +195,7 @@ const Users = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                {['User', 'Department', 'Role', 'Status', 'Last Login', 'Actions'].map((h, i) => (
+                {['User', 'Department', 'Role', 'Status', 'Last Login', 'Actions'].map((h) => (
                   <th key={h} style={{ padding: '16px', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)', fontWeight: 500, textAlign: h === 'Actions' ? 'right' : 'left' }}>{h}</th>
                 ))}
               </tr>

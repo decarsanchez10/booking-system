@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Ticket, Plus, Search, Filter, X, CheckCircle, Upload, ChevronDown } from 'lucide-react';
+import { Ticket, Plus, Search, X, CheckCircle, Upload } from 'lucide-react';
 
 /* ── Modal ── */
 const Modal = ({ title, children, onClose }) => (

@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Search, Plus, Star, Edit, UserX, X, CheckCircle, UserCheck } from 'lucide-react';
+import api, { getApiErrorMessage } from '../../../lib/api';
 
 /* ── Modal ── */
 const Modal = ({ title, children, onClose }) => (
@@ -25,9 +26,33 @@ const INITIAL_AGENTS = [
   { id: 'AGT-06', name: 'Anita Patel', specialty: 'Software', rating: 4.9, completed: 156, load: 95, avatar: 'AP', active: true },
 ];
 
+const toAgentCard = (user) => {
+  const initials = user.name
+    ?.split(' ')
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'A';
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    specialty: 'IT Support',
+    rating: 0,
+    completed: 0,
+    load: 0,
+    avatar: initials,
+    active: true,
+  };
+};
+
 const Agents = () => {
   const container = useRef();
   const [agents, setAgents] = useState(INITIAL_AGENTS);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Add agent modal
@@ -47,6 +72,29 @@ const Agents = () => {
   useGSAP(() => {
     gsap.from('.agent-card', { opacity: 0, scale: 0.95, stagger: 0.05, duration: 0.4, ease: 'power2.out' });
   }, { scope: container });
+
+  useEffect(() => {
+    const loadAgents = async () => {
+      setIsLoading(true);
+      setLoadError('');
+
+      try {
+        const { data } = await api.get('/admin/users');
+        const users = data.data || data;
+        const apiAgents = users
+          .filter((user) => user.roles?.some((role) => role.name === 'agent'))
+          .map(toAgentCard);
+
+        setAgents(apiAgents);
+      } catch (error) {
+        setLoadError(getApiErrorMessage(error, 'Unable to load agents.'));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAgents();
+  }, []);
 
   const filtered = agents.filter(a => a.name.toLowerCase().includes(searchTerm.toLowerCase()) || a.specialty.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -147,6 +195,18 @@ const Agents = () => {
         <input type="text" placeholder="Search agents..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
           style={{ width: '100%', padding: '12px 16px 12px 36px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }} />
       </div>
+
+      {loadError && (
+        <div className="card" style={{ padding: '16px 20px', marginBottom: '24px', color: '#ff6b6b' }}>
+          {loadError}
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="card" style={{ padding: '24px', marginBottom: '24px', color: 'var(--text-secondary)' }}>
+          Loading agents...
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
         {filtered.map(agent => (

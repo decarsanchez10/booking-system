@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useAuth } from '../../../context/AuthContext';
-import { Calendar, Users, Star, Clock, ArrowRight, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { Calendar, Star, Clock, ArrowRight, CheckCircle, X } from 'lucide-react';
 
 /* ── Modal ── */
 const Modal = ({ title, children, onClose }) => (

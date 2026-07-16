@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useState } from 'react';
 import { Bell, CheckCheck, Calendar, Ticket, AlertCircle, Info } from 'lucide-react';
 
 const getIcon = (type) => {
@@ -55,7 +55,10 @@ const mockNotifications = [
 ];
 
 const Notifications = () => {
-  const unreadCount = mockNotifications.filter(n => !n.read).length;
+  const [notifications, setNotifications] = useState(mockNotifications);
+  const unreadCount = notifications.filter(n => !n.read).length;
+  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markOneRead = (id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
 
   return (
     <div>
@@ -71,11 +74,12 @@ const Notifications = () => {
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>Stay updated on your tickets, appointments, and announcements.</p>
         </div>
-        <button style={{
+        <button onClick={markAllRead} disabled={unreadCount === 0} style={{
           display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px',
           background: 'transparent', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)',
-          color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem',
+          color: 'var(--text-secondary)', cursor: unreadCount === 0 ? 'not-allowed' : 'pointer', fontSize: '0.9rem',
           transition: 'all 0.2s',
+          opacity: unreadCount === 0 ? 0.55 : 1,
         }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}>
@@ -84,14 +88,14 @@ const Notifications = () => {
         </button>
       </div>
 
-      {mockNotifications.length === 0 ? (
+      {notifications.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '80px 20px', color: 'var(--text-muted)' }}>
           <Bell size={48} style={{ marginBottom: '16px', opacity: 0.3 }} />
           <p>You're all caught up! No new notifications.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {mockNotifications.map(notif => (
+          {notifications.map(notif => (
             <div key={notif.id} style={{
               display: 'flex',
               gap: '16px',
@@ -102,6 +106,7 @@ const Notifications = () => {
               transition: 'all 0.2s',
               cursor: 'pointer',
             }}
+              onClick={() => markOneRead(notif.id)}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(0,240,255,0.3)'}
               onMouseLeave={e => e.currentTarget.style.borderColor = notif.read ? 'var(--border)' : 'rgba(0,240,255,0.15)'}
             >

@@ -2,11 +2,12 @@ import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import api, { getApiErrorMessage } from '../lib/api';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const [isSent, setIsSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const container = useRef();
   const formRef = useRef();
   const successRef = useRef();
@@ -15,14 +16,14 @@ const ForgotPassword = () => {
     gsap.from('.forgot-card', { opacity: 0, y: 20, duration: 0.6, ease: 'power3.out' });
   }, { scope: container });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await api.post('/auth/forgot-password', { email });
       setIsLoading(false);
-      setIsSent(true);
 
       // Success animation
       gsap.to(formRef.current, { opacity: 0, y: -20, duration: 0.3, display: 'none' });
@@ -37,7 +38,10 @@ const ForgotPassword = () => {
         yoyo: true,
         duration: 1
       });
-    }, 1000);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Unable to send reset instructions.'));
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -82,6 +86,20 @@ const ForgotPassword = () => {
             </div>
 
             <form onSubmit={handleSubmit}>
+              {error && (
+                <div style={{
+                  padding: '12px 16px',
+                  background: 'rgba(93, 0, 26, 0.15)',
+                  border: '1px solid var(--accent-border)',
+                  borderRadius: 'var(--radius-xs)',
+                  color: '#ff6b6b',
+                  fontSize: '0.85rem',
+                  marginBottom: '20px',
+                  textAlign: 'center'
+                }}>
+                  {error}
+                </div>
+              )}
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ 
                   display: 'block', 
