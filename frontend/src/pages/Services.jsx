@@ -42,10 +42,10 @@ const Services = () => {
   }, { scope: container });
 
   return (
-    <div ref={container} style={{ minHeight: 'calc(100vh - 72px)', paddingTop: '100px', paddingBottom: '60px' }}>
+    <div ref={container} style={{ minHeight: 'calc(100vh - 72px)', paddingTop: '132px', paddingBottom: '60px' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
         
-        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '56px' }}>
           <h1 style={{ fontSize: '2.5rem', marginBottom: '16px', color: 'var(--text-primary)' }}>
             Our IT <span style={{ color: 'var(--accent)' }}>Services</span>
           </h1>
@@ -54,21 +54,22 @@ const Services = () => {
           </p>
         </div>
 
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-          gap: '24px' 
-        }}>
+        <div className="services-grid">
           {services.map((service, index) => {
             const Icon = service.icon;
             return (
-              <div key={index} className="service-card" style={{
+              <div key={index} className="service-card" data-scroll-reveal="off" style={{
                 background: 'rgba(255, 255, 255, 0.03)',
                 backdropFilter: 'blur(24px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(24px) saturate(180%)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: 'var(--radius)',
                 padding: '32px',
+                minHeight: '240px',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
                 transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease',
                 cursor: 'pointer',
               }}

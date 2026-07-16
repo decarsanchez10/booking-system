@@ -7,6 +7,7 @@ import RoleRoute from './components/RoleRoute';
 import Navbar from './components/Navbar';
 import FloatingSupportButton from './components/FloatingSupportButton';
 import DashboardLayout from './components/layout/DashboardLayout';
+import ScrollAnimations from './components/ScrollAnimations';
 
 const Home = lazy(() => import('./pages/Home'));
 const Services = lazy(() => import('./pages/Services'));
@@ -51,6 +52,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
+          <ScrollAnimations />
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               {/* Public Routes */}

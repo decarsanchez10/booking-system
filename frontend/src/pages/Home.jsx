@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -18,6 +18,51 @@ const trustedLogos = [
   { id: 'dell', name: 'Dell Technologies', color: '#007db8' },
   { id: 'intel', name: 'Intel', color: '#00c7fd' },
   { id: 'oracle', name: 'Oracle', color: '#f80000' },
+];
+
+const testimonials = [
+  {
+    text: 'Booked a hardware appointment in under a minute. The agent had already reviewed my issue description before I arrived, and my laptop was back online before my next class.',
+    name: 'Alex Rivera',
+    role: 'Computer Science Student',
+    organization: 'College of Engineering',
+    initials: 'AR',
+  },
+  {
+    text: 'As staff, I used to wait days for IT support. With Obsidian, I book a slot, describe the issue, and get a prepared technician the same day.',
+    name: 'Dr. Patricia Kim',
+    role: 'Faculty Member',
+    organization: 'Biology Department',
+    initials: 'PK',
+  },
+  {
+    text: 'The network support team fixed my connectivity issues remotely during a scheduled session. No more walking to the IT office and waiting in line.',
+    name: 'Marcus Johnson',
+    role: 'Graduate Student',
+    organization: 'Research Lab',
+    initials: 'MJ',
+  },
+  {
+    text: 'Obsidian gives our admin team visibility into requests, schedules, and resolution status without chasing email threads. It feels built for real operations.',
+    name: 'Elena Santos',
+    role: 'Operations Coordinator',
+    organization: 'Student Services',
+    initials: 'ES',
+  },
+  {
+    text: 'The appointment flow is clean, secure, and predictable. Our department can route issues faster and students always know when help is coming.',
+    name: 'Noah Bennett',
+    role: 'IT Support Lead',
+    organization: 'Campus Technology',
+    initials: 'NB',
+  },
+  {
+    text: 'I submitted an account access issue before lunch and had a verified support session booked immediately. The whole process felt polished and trustworthy.',
+    name: 'Maya Chen',
+    role: 'Administrative Staff',
+    organization: 'Admissions Office',
+    initials: 'MC',
+  },
 ];
 
 const TrustedLogoMark = ({ logo }) => {
@@ -84,6 +129,15 @@ const TrustedLogoMark = ({ logo }) => {
 
 const Home = () => {
   const container = useRef();
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveTestimonial((current) => (current + 1) % testimonials.length);
+    }, 5600);
+
+    return () => clearInterval(timer);
+  }, []);
 
   useGSAP(() => {
     // Hero animations
@@ -171,15 +225,92 @@ const Home = () => {
     });
 
     // Testimonials
-    gsap.from('.testimonial-card', {
-      scrollTrigger: { trigger: '.testimonials-grid', start: 'top 85%' },
+    gsap.from('.testimonials-section', {
+      scrollTrigger: { trigger: '.testimonials-section', start: 'top 82%' },
+      opacity: 0,
+      y: 42,
+      duration: 0.75,
+      ease: 'power3.out'
+    });
+
+    gsap.from('.testimonial-reveal', {
+      scrollTrigger: { trigger: '.testimonials-section', start: 'top 80%' },
       opacity: 0,
       y: 20,
-      stagger: 0.1,
-      duration: 0.5,
+      stagger: 0.12,
+      duration: 0.6,
       ease: 'power2.out'
     });
+
+    gsap.from('.testimonial-stage', {
+      scrollTrigger: { trigger: '.testimonial-carousel', start: 'top 82%' },
+      opacity: 0,
+      scale: 0.9,
+      duration: 0.7,
+      delay: 0.15,
+      ease: 'back.out(1.35)'
+    });
+
+    gsap.from('.testimonial-star', {
+      scrollTrigger: { trigger: '.testimonial-carousel', start: 'top 82%' },
+      opacity: 0,
+      y: -8,
+      scale: 0.6,
+      stagger: 0.07,
+      duration: 0.35,
+      delay: 0.35,
+      ease: 'back.out(1.7)'
+    });
+
+    gsap.from('.testimonial-quote-line', {
+      scrollTrigger: { trigger: '.testimonial-carousel', start: 'top 82%' },
+      opacity: 0,
+      y: 12,
+      stagger: 0.08,
+      duration: 0.45,
+      delay: 0.45,
+      ease: 'power2.out'
+    });
+
+    gsap.from('.testimonial-person', {
+      scrollTrigger: { trigger: '.testimonial-carousel', start: 'top 82%' },
+      opacity: 0,
+      y: 24,
+      rotation: -3,
+      duration: 0.55,
+      delay: 0.62,
+      ease: 'power2.out'
+    });
+
+    gsap.to('.testimonial-stage', {
+      scrollTrigger: {
+        trigger: '.testimonials-section',
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: 1.2
+      },
+      x: 120,
+      scale: 1.02,
+      transformOrigin: 'center center',
+      ease: 'none'
+    });
+
+    gsap.to('.testimonial-glow-orbit', {
+      scrollTrigger: {
+        trigger: '.testimonials-section',
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: 1
+      },
+      x: 150,
+      ease: 'none'
+    });
   }, { scope: container });
+
+  const activeReview = testimonials[activeTestimonial];
+  const previousReview = testimonials[(activeTestimonial - 1 + testimonials.length) % testimonials.length];
+  const nextReview = testimonials[(activeTestimonial + 1) % testimonials.length];
+  const quoteLines = activeReview.text.match(/.{1,82}(\s|$)/g) || [activeReview.text];
 
   return (
     <div ref={container}>
@@ -529,54 +660,79 @@ const Home = () => {
       {/* ═══════════════════════════════════════
           TESTIMONIALS
           ═══════════════════════════════════════ */}
-      <section className="section">
+      <section className="section testimonials-section">
         <div className="section-container">
           <div className="section-header">
-            <div className="section-label">// FEEDBACK</div>
-            <h2 className="section-title">WHAT USERS SAY</h2>
-            <p className="section-subtitle">
+            <div className="section-label testimonial-reveal">// FEEDBACK</div>
+            <h2 className="section-title testimonial-reveal">WHAT USERS SAY</h2>
+            <p className="section-subtitle testimonial-reveal">
               Hear from students and staff who rely on Obsidian Help Desk every day.
             </p>
           </div>
 
-          <div className="testimonials-grid">
-            {[
-              {
-                text: 'Booked a hardware appointment in under a minute. The agent had already reviewed my issue description before I arrived. Incredibly efficient.',
-                name: 'Alex Rivera',
-                role: 'Computer Science Student',
-                initials: 'AR',
-                stars: 5,
-              },
-              {
-                text: 'As staff, I used to wait days for IT support. With Obsidian, I book a slot, describe the issue, and it is resolved the same day. Game changer.',
-                name: 'Dr. Patricia Kim',
-                role: 'Faculty — Biology Dept.',
-                initials: 'PK',
-                stars: 5,
-              },
-              {
-                text: 'The network support team fixed my connectivity issues remotely during a scheduled session. No more walking to the IT office and waiting in line.',
-                name: 'Marcus Johnson',
-                role: 'Graduate Student',
-                initials: 'MJ',
-                stars: 4,
-              },
-            ].map((t, i) => (
-              <div className="testimonial-card" key={i}>
-                <div className="testimonial-stars">
-                  {'★'.repeat(t.stars)}{'☆'.repeat(5 - t.stars)}
+          <div className="testimonial-carousel">
+            <div className="testimonial-glow-orbit" aria-hidden="true"></div>
+            <div className="testimonial-stage">
+              <article className="testimonial-side-card testimonial-side-left" aria-hidden="true">
+                <div className="testimonial-mini-stars">★★★★★</div>
+                <p>{previousReview.text}</p>
+                <strong>{previousReview.name}</strong>
+              </article>
+
+              <article className="testimonial-featured-card" key={activeReview.name}>
+                <div className="testimonial-stars" aria-label="Five star rating">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span className="testimonial-star" key={star}>★</span>
+                  ))}
                 </div>
-                <p className="testimonial-text">"{t.text}"</p>
-                <div className="testimonial-author">
-                  <div className="testimonial-avatar">{t.initials}</div>
-                  <div>
-                    <div className="testimonial-name">{t.name}</div>
-                    <div className="testimonial-role">{t.role}</div>
+                <div className="testimonial-quote-mark" aria-hidden="true">“</div>
+                <blockquote className="testimonial-quote">
+                  {quoteLines.map((line, index) => (
+                    <span className="testimonial-quote-line" key={`${activeReview.name}-${index}`}>{line.trim()}</span>
+                  ))}
+                </blockquote>
+
+                <div className="testimonial-card-footer">
+                  <div className="testimonial-person">
+                    <div className="testimonial-avatar">{activeReview.initials}</div>
+                    <div>
+                      <div className="testimonial-name">{activeReview.name}</div>
+                      <div className="testimonial-role">{activeReview.role}</div>
+                      <div className="testimonial-org">{activeReview.organization}</div>
+                    </div>
+                  </div>
+                  <div className="verified-badge">
+                    <span>✓</span>
+                    Verified User
                   </div>
                 </div>
-              </div>
-            ))}
+              </article>
+
+              <article className="testimonial-side-card testimonial-side-right" aria-hidden="true">
+                <div className="testimonial-mini-stars">★★★★★</div>
+                <p>{nextReview.text}</p>
+                <strong>{nextReview.name}</strong>
+              </article>
+            </div>
+
+            <div className="testimonial-dots" aria-label="Testimonial pagination">
+              {testimonials.map((review, index) => (
+                <button
+                  className={`testimonial-dot ${index === activeTestimonial ? 'active' : ''}`}
+                  type="button"
+                  aria-label={`Show testimonial from ${review.name}`}
+                  aria-current={index === activeTestimonial}
+                  onClick={() => setActiveTestimonial(index)}
+                  key={review.name}
+                />
+              ))}
+            </div>
+
+            <div className="testimonial-trust">
+              <span className="testimonial-trust-stars">★★★★★</span>
+              <strong>4.9/5 Average Rating</strong>
+              <span>Trusted by 2,500+ students and staff</span>
+            </div>
           </div>
         </div>
       </section>
