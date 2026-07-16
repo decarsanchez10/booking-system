@@ -9,6 +9,79 @@ gsap.registerPlugin(ScrollTrigger);
 
 import headsetImg from '../assets/headset.png';
 
+const trustedLogos = [
+  { id: 'microsoft', name: 'Microsoft', color: '#7fba00' },
+  { id: 'cisco', name: 'Cisco', color: '#00bceb' },
+  { id: 'aws', name: 'AWS', color: '#ff9900' },
+  { id: 'google-cloud', name: 'Google Cloud', color: '#4285f4' },
+  { id: 'vmware', name: 'VMware', color: '#60a5fa' },
+  { id: 'dell', name: 'Dell Technologies', color: '#007db8' },
+  { id: 'intel', name: 'Intel', color: '#00c7fd' },
+  { id: 'oracle', name: 'Oracle', color: '#f80000' },
+];
+
+const TrustedLogoMark = ({ logo }) => {
+  switch (logo.id) {
+    case 'microsoft':
+      return (
+        <>
+          <span className="logo-microsoft-grid" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </span>
+          <span className="logo-word logo-microsoft">Microsoft</span>
+        </>
+      );
+    case 'cisco':
+      return (
+        <>
+          <span className="logo-cisco-bars" aria-hidden="true">
+            {[10, 18, 26, 18, 10, 22, 30, 22, 14].map((height, index) => (
+              <span style={{ height: `${height}px` }} key={`${height}-${index}`}></span>
+            ))}
+          </span>
+          <span className="logo-word logo-cisco">CISCO</span>
+        </>
+      );
+    case 'aws':
+      return (
+        <span className="logo-aws">
+          <span className="logo-word">aws</span>
+          <svg viewBox="0 0 86 24" aria-hidden="true">
+            <path d="M8 10c19 11 43 11 66 0" />
+            <path d="M66 7l10 4-8 7" />
+          </svg>
+        </span>
+      );
+    case 'google-cloud':
+      return (
+        <>
+          <svg className="logo-cloud-mark" viewBox="0 0 64 42" aria-hidden="true">
+            <path className="g-red" d="M22 39h27a12 12 0 0 0 1-24 18 18 0 0 0-33-5" />
+            <path className="g-yellow" d="M17 10A18 18 0 0 0 9 37" />
+            <path className="g-green" d="M9 37a14 14 0 0 0 13 2" />
+            <path className="g-blue" d="M22 39h27a12 12 0 0 0 1-24" />
+          </svg>
+          <span className="logo-word logo-google">Google Cloud</span>
+        </>
+      );
+    case 'vmware':
+      return <span className="logo-word logo-vmware">vmware</span>;
+    case 'dell':
+      return (
+        <>
+          <span className="logo-dell-ring" aria-hidden="true">DELL</span>
+          <span className="logo-word logo-dell-sub">Technologies</span>
+        </>
+      );
+    case 'intel':
+      return <span className="logo-word logo-intel">intel</span>;
+    case 'oracle':
+      return <span className="logo-word logo-oracle">ORACLE</span>;
+    default:
+      return <span className="logo-word">{logo.name}</span>;
+  }
+};
+
 const Home = () => {
   const container = useRef();
 
@@ -18,7 +91,6 @@ const Home = () => {
     gsap.from('.hero-title-line', { opacity: 0, y: 30, stagger: 0.12, duration: 0.7, delay: 0.3, ease: 'power3.out' });
     gsap.from('.hero-subtitle', { opacity: 0, y: 20, duration: 0.6, delay: 0.8, ease: 'power3.out' });
     gsap.from('.hero-buttons', { opacity: 0, y: 20, duration: 0.6, delay: 1.0, ease: 'power3.out' });
-    gsap.from('.hero-trust-item', { opacity: 0, y: 10, stagger: 0.08, duration: 0.5, delay: 1.2, ease: 'power3.out' });
     gsap.from('.hero-visual', { opacity: 0, scale: 0.95, duration: 1, delay: 0.5, ease: 'power3.out' });
 
     // Stats
@@ -27,6 +99,33 @@ const Home = () => {
       opacity: 0,
       y: 20,
       stagger: 0.1,
+      duration: 0.5,
+      ease: 'power2.out'
+    });
+
+    // Trusted logos
+    gsap.from('.trusted-heading', {
+      scrollTrigger: { trigger: '.trusted-section', start: 'top 82%' },
+      opacity: 0,
+      y: 24,
+      duration: 0.6,
+      ease: 'power3.out'
+    });
+
+    gsap.from('.trusted-subtitle', {
+      scrollTrigger: { trigger: '.trusted-section', start: 'top 82%' },
+      opacity: 0,
+      y: 18,
+      duration: 0.6,
+      delay: 0.12,
+      ease: 'power3.out'
+    });
+
+    gsap.from('.trusted-logo', {
+      scrollTrigger: { trigger: '.trusted-logos', start: 'top 88%' },
+      y: 18,
+      scale: 0.94,
+      stagger: 0.08,
       duration: 0.5,
       ease: 'power2.out'
     });
@@ -157,6 +256,41 @@ const Home = () => {
             <div className="stat-item">
               <div className="stat-value">98<span className="accent">%</span></div>
               <div className="stat-label">Success Rate</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="trusted-section">
+        <div className="trusted-gradient-line" aria-hidden="true"></div>
+        <div className="section-container">
+          <div className="trusted-panel">
+            <div className="trusted-copy">
+              <div className="trusted-label">// TRUSTED</div>
+              <h2 className="trusted-heading">Trusted by Industry Leaders</h2>
+              <p className="trusted-subtitle">
+                We partner with innovative organizations worldwide to deliver secure, reliable, and enterprise-grade IT support.
+              </p>
+            </div>
+
+            <div className="trusted-marquee" aria-label="Trusted company logos">
+              <div className="trusted-logos">
+                {trustedLogos.map((logo) => (
+                  <div className={`trusted-logo trusted-logo-${logo.id}`} style={{ '--logo-color': logo.color }} key={logo.name}>
+                    <TrustedLogoMark logo={logo} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="trusted-footnote">
+              <span className="trusted-shield" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 3l7 3v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6l7-3z" />
+                  <path d="M9 12l2 2 4-5" />
+                </svg>
+              </span>
+              Trusted by 10,000+ organizations across 120+ countries
             </div>
           </div>
         </div>

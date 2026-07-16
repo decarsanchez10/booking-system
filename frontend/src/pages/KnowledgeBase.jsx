@@ -5,12 +5,12 @@ import { useGSAP } from '@gsap/react';
 import { Search, BookOpen, HelpCircle, Play, ChevronRight, TrendingUp } from 'lucide-react';
 
 const categories = [
-  { label: 'Getting Started', count: 8, color: '#6C63FF' },
-  { label: 'Network & Connectivity', count: 12, color: '#00F0FF' },
-  { label: 'Hardware Issues', count: 9, color: '#FF6B6B' },
-  { label: 'Software & Apps', count: 15, color: '#FECA57' },
-  { label: 'Account & Security', count: 7, color: '#1DD1A1' },
-  { label: 'Email & Communication', count: 6, color: '#FF9FF3' },
+  { label: 'Getting Started', color: '#6C63FF' },
+  { label: 'Network & Connectivity', color: '#00F0FF' },
+  { label: 'Hardware Issues', color: '#FF6B6B' },
+  { label: 'Software & Apps', color: '#FECA57' },
+  { label: 'Account & Security', color: '#1DD1A1' },
+  { label: 'Email & Communication', color: '#FF9FF3' },
 ];
 
 const faqs = [
@@ -80,6 +80,11 @@ const KnowledgeBase = () => {
     const matchesCategory = activeCategory === 'All' || f.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const categoryCounts = faqs.reduce((counts, article) => ({
+    ...counts,
+    [article.category]: (counts[article.category] || 0) + 1,
+  }), {});
 
   return (
     <div ref={container} style={{ minHeight: 'calc(100vh - 72px)', paddingTop: '100px', paddingBottom: '60px' }}>
@@ -155,7 +160,7 @@ const KnowledgeBase = () => {
             >
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color, marginBottom: '12px' }} />
               <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>{cat.label}</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{cat.count} articles</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{categoryCounts[cat.label] || 0} articles</div>
             </button>
           ))}
         </div>

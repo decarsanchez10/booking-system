@@ -51,7 +51,6 @@ const toAgentCard = (user) => {
 const Agents = () => {
   const container = useRef();
   const [agents, setAgents] = useState(INITIAL_AGENTS);
-  const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -75,7 +74,6 @@ const Agents = () => {
 
   useEffect(() => {
     const loadAgents = async () => {
-      setIsLoading(true);
       setLoadError('');
 
       try {
@@ -88,8 +86,6 @@ const Agents = () => {
         setAgents(apiAgents);
       } catch (error) {
         setLoadError(getApiErrorMessage(error, 'Unable to load agents.'));
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -199,12 +195,6 @@ const Agents = () => {
       {loadError && (
         <div className="card" style={{ padding: '16px 20px', marginBottom: '24px', color: '#ff6b6b' }}>
           {loadError}
-        </div>
-      )}
-
-      {isLoading && (
-        <div className="card" style={{ padding: '24px', marginBottom: '24px', color: 'var(--text-secondary)' }}>
-          Loading agents...
         </div>
       )}
 

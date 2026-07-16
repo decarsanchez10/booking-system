@@ -512,6 +512,334 @@ a {
 }
 
 /* ============================================
+   TRUSTED LOGOS
+   ============================================ */
+.trusted-section {
+  position: relative;
+  padding: 74px 0 100px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.18), transparent 24%),
+    radial-gradient(circle at 82% 40%, rgba(6, 182, 212, 0.08), transparent 32%),
+    #09090f;
+  overflow: hidden;
+}
+
+.trusted-gradient-line {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(760px, calc(100% - 40px));
+  height: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.9), rgba(6, 182, 212, 0.9), transparent);
+  background-size: 220% 100%;
+  box-shadow: 0 0 22px rgba(139, 92, 246, 0.45);
+  animation: trustedLineSweep 4s ease-in-out infinite;
+}
+
+@keyframes trustedLineSweep {
+  0% {
+    background-position: 0% 50%;
+    opacity: 0.45;
+  }
+
+  50% {
+    background-position: 100% 50%;
+    opacity: 1;
+  }
+
+  100% {
+    background-position: 0% 50%;
+    opacity: 0.45;
+  }
+}
+
+.trusted-panel {
+  position: relative;
+  overflow: hidden;
+  padding: 38px 42px 44px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025)),
+    rgba(12, 12, 20, 0.72);
+  backdrop-filter: blur(26px) saturate(150%);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  box-shadow: 0 0 46px rgba(139, 92, 246, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.trusted-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 24% 0%, rgba(139, 92, 246, 0.18), transparent 32%),
+    radial-gradient(circle at 78% 90%, rgba(6, 182, 212, 0.11), transparent 30%);
+}
+
+.trusted-copy {
+  position: relative;
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 42px;
+}
+
+.trusted-label {
+  display: inline-flex;
+  margin-bottom: 14px;
+  color: #a78bfa;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+}
+
+.trusted-heading {
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  color: #ffffff;
+  margin-bottom: 16px;
+  letter-spacing: 0;
+  text-shadow: 0 14px 35px rgba(0, 0, 0, 0.45);
+}
+
+.trusted-subtitle {
+  max-width: 600px;
+  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.trusted-marquee {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(167, 139, 250, 0.32);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 8% 50%, rgba(139, 92, 246, 0.22), transparent 28%),
+    radial-gradient(circle at 92% 50%, rgba(6, 182, 212, 0.14), transparent 30%),
+    rgba(7, 8, 16, 0.66);
+  box-shadow: 0 0 28px rgba(139, 92, 246, 0.18), 0 0 48px rgba(6, 182, 212, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.055);
+}
+
+.trusted-logos {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(96px, 1fr));
+  gap: 0;
+  align-items: center;
+  min-height: 150px;
+  padding: 30px 28px;
+}
+
+.trusted-logo {
+  position: relative;
+  z-index: 1;
+  min-height: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
+  color: rgba(255, 255, 255, 0.52);
+  filter: grayscale(1);
+  opacity: 0.56;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-align: center;
+  line-height: 1.2;
+  transition: color 0.35s var(--ease), filter 0.35s var(--ease), opacity 0.35s var(--ease), transform 0.35s var(--ease);
+}
+
+.trusted-logo:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 18%;
+  width: 1px;
+  height: 64%;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.11), transparent);
+}
+
+.trusted-logo:hover {
+  filter: grayscale(0);
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.trusted-logo:hover .logo-word,
+.trusted-logo:hover .logo-dell-ring {
+  color: var(--logo-color);
+  border-color: currentColor;
+}
+
+.logo-word {
+  color: rgba(255, 255, 255, 0.76);
+  transition: color 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+
+.logo-microsoft-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 16px);
+  grid-template-rows: repeat(2, 16px);
+  gap: 3px;
+}
+
+.logo-microsoft-grid span:nth-child(1) { background: #f25022; }
+.logo-microsoft-grid span:nth-child(2) { background: #7fba00; }
+.logo-microsoft-grid span:nth-child(3) { background: #00a4ef; }
+.logo-microsoft-grid span:nth-child(4) { background: #ffb900; }
+
+.logo-microsoft {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.logo-cisco-bars {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.logo-cisco-bars span {
+  width: 4px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.logo-cisco {
+  font-size: 1.1rem;
+  letter-spacing: 4px;
+}
+
+.logo-aws {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.logo-aws .logo-word {
+  font-size: 2.05rem;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.logo-aws svg {
+  width: 76px;
+  height: 22px;
+  margin-top: -2px;
+  overflow: visible;
+}
+
+.logo-aws path {
+  fill: none;
+  stroke: #ff9900;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.logo-cloud-mark {
+  width: 45px;
+  height: 34px;
+  overflow: visible;
+}
+
+.logo-cloud-mark path {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.g-red { stroke: #ea4335; }
+.g-yellow { stroke: #fbbc05; }
+.g-green { stroke: #34a853; }
+.g-blue { stroke: #4285f4; }
+
+.logo-google {
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.logo-vmware {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.logo-dell-ring {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.78);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.86rem;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.logo-dell-sub {
+  font-size: 0.58rem;
+  font-weight: 500;
+}
+
+.logo-intel {
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+}
+
+.logo-oracle {
+  font-size: 1.05rem;
+  color: #ff3b30;
+  letter-spacing: 1px;
+}
+
+.trusted-footnote {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 34px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.78rem;
+}
+
+.trusted-shield {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  color: #a78bfa;
+}
+
+.trusted-shield svg {
+  width: 100%;
+  height: 100%;
+}
+
+.trusted-shield path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ============================================
    SECTION HEADERS
    ============================================ */
 .section {
@@ -1269,6 +1597,10 @@ a {
     grid-template-columns: repeat(3, 1fr);
   }
 
+  .trusted-logos {
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+  }
+
   .stat-item:nth-child(4),
   .stat-item:nth-child(5) {
     display: none;
@@ -1310,6 +1642,24 @@ a {
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .trusted-section {
+    padding: 64px 0 80px;
+  }
+
+  .trusted-panel {
+    padding: 42px 20px 28px;
+  }
+
+  .trusted-logos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trusted-logo {
+    min-height: 66px;
+    padding: 16px 10px;
+    font-size: 0.82rem;
   }
 
   .stat-item:nth-child(3) {
