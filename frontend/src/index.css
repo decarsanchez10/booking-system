@@ -1,7 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
 
+@font-face {
+  font-family: 'Rostex';
+  src: url('./assets/Rostex-Oblique.ttf') format('truetype');
+}
+
 /* ============================================
-   OBSIDIAN HELP DESK — Design System
+   RACEDCORE HELP DESK — Design System
    Premium Enterprise SaaS Aesthetic
    ============================================ */
 
@@ -187,7 +192,7 @@ a {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--font-display);
+  font-family: 'Rostex', var(--font-display);
   font-size: 1.1rem;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -206,7 +211,7 @@ a {
   justify-content: center;
   font-size: 0.8rem;
   font-weight: 800;
-  font-family: var(--font-display);
+  font-family: 'Rostex', var(--font-display);
   box-shadow: 0 0 15px var(--accent-glow);
 }
 
@@ -364,13 +369,6 @@ a {
   letter-spacing: 1px;
 }
 
-.hero-badge-dot {
-  width: 6px;
-  height: 6px;
-  background: var(--accent);
-  border-radius: 50%;
-  box-shadow: 0 0 8px var(--accent-glow);
-}
 
 .hero-title {
   font-size: clamp(3.5rem, 6vw, 5.5rem);
@@ -425,6 +423,9 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 0 50px rgba(139, 92, 246, 0.25);
 }
 
 @keyframes float {
@@ -691,10 +692,21 @@ a {
   gap: 3px;
 }
 
-.logo-microsoft-grid span:nth-child(1) { background: #f25022; }
-.logo-microsoft-grid span:nth-child(2) { background: #7fba00; }
-.logo-microsoft-grid span:nth-child(3) { background: #00a4ef; }
-.logo-microsoft-grid span:nth-child(4) { background: #ffb900; }
+.logo-microsoft-grid span:nth-child(1) {
+  background: #f25022;
+}
+
+.logo-microsoft-grid span:nth-child(2) {
+  background: #7fba00;
+}
+
+.logo-microsoft-grid span:nth-child(3) {
+  background: #00a4ef;
+}
+
+.logo-microsoft-grid span:nth-child(4) {
+  background: #ffb900;
+}
 
 .logo-microsoft {
   font-size: 0.78rem;
@@ -761,10 +773,21 @@ a {
   stroke-linejoin: round;
 }
 
-.g-red { stroke: #ea4335; }
-.g-yellow { stroke: #fbbc05; }
-.g-green { stroke: #34a853; }
-.g-blue { stroke: #4285f4; }
+.g-red {
+  stroke: #ea4335;
+}
+
+.g-yellow {
+  stroke: #fbbc05;
+}
+
+.g-green {
+  stroke: #34a853;
+}
+
+.g-blue {
+  stroke: #4285f4;
+}
 
 .logo-google {
   font-size: 0.72rem;
@@ -1315,7 +1338,9 @@ a {
 }
 
 @keyframes testimonialGlowDrift {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translate(-56%, -50%) scale(0.95);
   }
 

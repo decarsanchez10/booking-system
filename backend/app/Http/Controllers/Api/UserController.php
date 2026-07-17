@@ -16,10 +16,12 @@ class UserController extends Controller
         $userId = $request->user()->id;
 
         return response()->json([
-            'appointments' => Appointment::where('user_id', $userId)->count(),
-            'upcoming_appointments' => Appointment::where('user_id', $userId)->where('appointment_date', '>=', now())->count(),
+            'upcoming' => Appointment::where('user_id', $userId)->where('status', 'Approved')->where('appointment_date', '>=', now())->count(),
+            'completed' => Appointment::where('user_id', $userId)->where('status', 'Completed')->count(),
+            'pending' => Appointment::where('user_id', $userId)->where('status', 'Pending')->count(),
+            'cancelled' => Appointment::where('user_id', $userId)->where('status', 'Cancelled')->count(),
             'open_tickets' => Ticket::where('user_id', $userId)->whereNotIn('status', ['Resolved', 'Closed'])->count(),
-            'recent_appointments' => Appointment::where('user_id', $userId)->latest('appointment_date')->limit(5)->get(),
+            'recent_appointments' => Appointment::with('agent:id,name')->where('user_id', $userId)->latest('appointment_date')->limit(5)->get(),
         ]);
     }
 
@@ -32,8 +34,10 @@ class UserController extends Controller
     {
         $user = $request->user();
         $data = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'name'       => 'sometimes|required|string|max:255',
+            'email'      => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'phone'      => 'sometimes|nullable|string|max:30',
+            'department' => 'sometimes|nullable|string|max:100',
         ]);
 
         $user->update($data);
@@ -48,6 +52,7 @@ class UserController extends Controller
         ]);
 
         $path = $request->file('avatar')->store('avatars', 'public');
+        $request->user()->update(['avatar' => asset('storage/'.$path)]);
 
         return response()->json(['avatar_url' => asset('storage/'.$path)], 201);
     }

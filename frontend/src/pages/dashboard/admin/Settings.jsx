@@ -1,13 +1,16 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Save, Building, Mail, Shield, Clock, Layout } from 'lucide-react';
+import api from '../../../lib/api';
 
 const Settings = () => {
   const container = useRef();
   const [activeTab, setActiveTab] = useState('organization');
   const [isSaving, setIsSaving] = useState(false);
   const [keyRotated, setKeyRotated] = useState(false);
+  const [settings, setSettings] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useGSAP(() => {
     gsap.from('.settings-content', {
@@ -18,9 +21,34 @@ const Settings = () => {
     });
   }, { scope: container, dependencies: [activeTab] });
 
-  const handleSave = () => {
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const { data } = await api.get('/admin/settings');
+        setSettings(data || {});
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
+  const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => setIsSaving(false), 1000);
+    try {
+      await api.put('/admin/settings', { settings });
+      setTimeout(() => setIsSaving(false), 1000);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      setIsSaving(false);
+    }
+  };
+
+  const updateSetting = (key, value) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
   };
 
   const handleRotateKey = () => {
@@ -88,26 +116,30 @@ const Settings = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Platform Name</label>
-                  <input type="text" defaultValue="Obsidian Help Desk" style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }} />
+                  <input 
+                    type="text" 
+                    value={settings.platform_name || ''} 
+                    onChange={e => updateSetting('platform_name', e.target.value)}
+                    style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }} 
+                  />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Support Email</label>
-                  <input type="email" defaultValue="support@obsidian.edu" style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }} />
+                  <input 
+                    type="email" 
+                    value={settings.support_email || ''} 
+                    onChange={e => updateSetting('support_email', e.target.value)}
+                    style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }} 
+                  />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Support Phone</label>
-                  <input type="tel" defaultValue="+1 (555) 000-1234" style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }} />
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Supported Departments</label>
-                  <div style={{ padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)' }}>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      {['Hardware', 'Software', 'Network', 'Account'].map(dept => (
-                        <span key={dept} style={{ padding: '4px 12px', background: 'rgba(255,255,255,0.1)', borderRadius: '100px', fontSize: '0.85rem' }}>{dept} ✕</span>
-                      ))}
-                      <input type="text" placeholder="Add department..." style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', width: '120px' }} />
-                    </div>
-                  </div>
+                  <input 
+                    type="tel" 
+                    value={settings.support_phone || ''} 
+                    onChange={e => updateSetting('support_phone', e.target.value)}
+                    style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }} 
+                  />
                 </div>
               </div>
             </div>
@@ -120,7 +152,7 @@ const Settings = () => {
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>JWT Secret Key</label>
                   <div style={{ display: 'flex', gap: '12px' }}>
-                    <input type="password" defaultValue="************************" disabled style={{ flex: 1, padding: '12px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-muted)', outline: 'none' }} />
+                    <input type="password" value="************************" disabled style={{ flex: 1, padding: '12px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-muted)', outline: 'none' }} />
                     <button type="button" onClick={handleRotateKey} className="btn-secondary" style={{ padding: '0 24px' }}>
                       {keyRotated ? 'Key Rotated' : 'Rotate Key'}
                     </button>
@@ -128,11 +160,21 @@ const Settings = () => {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Token Expiration (Minutes)</label>
-                  <input type="number" defaultValue="60" style={{ width: '200px', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }} />
+                  <input 
+                    type="number" 
+                    value={settings.token_expiration || 60} 
+                    onChange={e => updateSetting('token_expiration', parseInt(e.target.value))}
+                    style={{ width: '200px', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none' }} 
+                  />
                 </div>
                 <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', marginTop: '12px' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-                    <input type="checkbox" defaultChecked={true} style={{ accentColor: 'var(--accent)', width: '18px', height: '18px' }} />
+                    <input 
+                      type="checkbox" 
+                      checked={settings.require_sso || false}
+                      onChange={e => updateSetting('require_sso', e.target.checked)}
+                      style={{ accentColor: 'var(--accent)', width: '18px', height: '18px' }} 
+                    />
                     <div>
                       <div style={{ fontWeight: 500 }}>Require Single Sign-On (SSO)</div>
                       <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Force users to authenticate via University Identity Provider.</div>

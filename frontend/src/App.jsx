@@ -6,6 +6,7 @@ import RoleRoute from './components/RoleRoute';
 
 import Navbar from './components/Navbar';
 import FloatingSupportButton from './components/FloatingSupportButton';
+import ChatWidget from './components/ChatWidget';
 import DashboardLayout from './components/layout/DashboardLayout';
 import ScrollAnimations from './components/ScrollAnimations';
 
@@ -38,6 +39,7 @@ const PublicLayout = ({ children }) => (
     <Navbar />
     {children}
     <FloatingSupportButton />
+    <ChatWidget />
   </>
 );
 

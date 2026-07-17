@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -14,22 +14,41 @@ import {
   HeadphonesIcon, 
   Wrench 
 } from 'lucide-react';
+import api from '../lib/api';
 
-const services = [
-  { icon: Monitor, title: 'Hardware Troubleshooting', desc: 'Diagnostics and repair for desktops, laptops, and peripherals.' },
-  { icon: Cpu, title: 'Software Installation', desc: 'Setup and configuration of essential software and operating systems.' },
-  { icon: Wifi, title: 'Network Support', desc: 'Wi-Fi troubleshooting, VPN access, and connectivity issues.' },
-  { icon: Printer, title: 'Printer Setup', desc: 'Local and network printer configuration and maintenance.' },
-  { icon: Mail, title: 'Email Support', desc: 'Email account recovery, client setup, and spam filtering.' },
-  { icon: UserCog, title: 'Account Management', desc: 'Access control, role modifications, and account provisioning.' },
-  { icon: KeyRound, title: 'Password Reset', desc: 'Secure recovery for locked accounts and forgotten passwords.' },
-  { icon: ShieldAlert, title: 'Virus & Malware Removal', desc: 'Deep system scans, cleanup, and security hardening.' },
-  { icon: HeadphonesIcon, title: 'Remote Assistance', desc: 'Instant support via secure remote desktop sessions.' },
-  { icon: Wrench, title: 'On-site Support', desc: 'In-person technical assistance for critical infrastructure.' },
-];
+const ICON_MAP = {
+  'Hardware': Monitor,
+  'Software': Cpu,
+  'Network': Wifi,
+  'Printer': Printer,
+  'Email': Mail,
+  'Account': UserCog,
+  'Data Recovery': KeyRound,
+  'Security': ShieldAlert,
+  'Remote': HeadphonesIcon,
+  'On-site': Wrench,
+};
 
 const Services = () => {
   const container = useRef();
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const { data } = await api.get('/services');
+        const servicesData = data.data || data;
+        setServices(servicesData.filter(s => s.is_active));
+      } catch (error) {
+        console.error('Failed to load services:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
 
   useGSAP(() => {
     gsap.from('.service-card', {
@@ -39,7 +58,24 @@ const Services = () => {
       stagger: 0.1,
       ease: 'power3.out'
     });
-  }, { scope: container });
+  }, { scope: container, dependencies: [services] });
+
+  const getIconForService = (serviceName) => {
+    for (const [key, Icon] of Object.entries(ICON_MAP)) {
+      if (serviceName.toLowerCase().includes(key.toLowerCase())) {
+        return Icon;
+      }
+    }
+    return Monitor; // Default icon
+  };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: 'calc(100vh - 72px)', paddingTop: '132px', paddingBottom: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: 'var(--text-muted)' }}>Loading services...</div>
+      </div>
+    );
+  }
 
   return (
     <div ref={container} style={{ minHeight: 'calc(100vh - 72px)', paddingTop: '132px', paddingBottom: '60px' }}>
@@ -55,10 +91,10 @@ const Services = () => {
         </div>
 
         <div className="services-grid">
-          {services.map((service, index) => {
-            const Icon = service.icon;
+          {services.map((service) => {
+            const Icon = getIconForService(service.name);
             return (
-              <div key={index} className="service-card" data-scroll-reveal="off" style={{
+              <div key={service.id} className="service-card" data-scroll-reveal="off" style={{
                 background: 'rgba(255, 255, 255, 0.03)',
                 backdropFilter: 'blur(24px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(24px) saturate(180%)',
@@ -96,10 +132,10 @@ const Services = () => {
                   <Icon size={24} color="var(--accent)" />
                 </div>
                 <h3 style={{ fontSize: '1.2rem', marginBottom: '12px', color: 'var(--text-primary)' }}>
-                  {service.title}
+                  {service.name}
                 </h3>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.5' }}>
-                  {service.desc}
+                  {service.description}
                 </p>
               </div>
             );

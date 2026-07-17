@@ -12,7 +12,8 @@ import {
   Shield,
   Briefcase,
   Ticket,
-  Bell
+  Bell,
+  MessageSquare
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -28,6 +29,7 @@ const Sidebar = () => {
       { name: 'Book Appointment', path: '/dashboard/user/book', icon: <Calendar size={18} /> },
       { name: 'My Appointments', path: '/dashboard/user/appointments', icon: <Clock size={18} /> },
       { name: 'My Tickets', path: '/dashboard/user/tickets', icon: <Ticket size={18} /> },
+      { name: 'Messages', path: '/dashboard/user', icon: <MessageSquare size={18} />, action: 'chat' },
       { name: 'Notifications', path: '/dashboard/user/notifications', icon: <Bell size={18} /> },
       { name: 'Profile', path: '/dashboard/user/profile', icon: <Settings size={18} /> },
     ],
@@ -35,6 +37,7 @@ const Sidebar = () => {
       { name: 'Dashboard', path: '/dashboard/agent', icon: <LayoutDashboard size={18} /> },
       { name: 'Appointments', path: '/dashboard/agent/appointments', icon: <Calendar size={18} /> },
       { name: 'Assigned Tickets', path: '/dashboard/agent/tickets', icon: <Ticket size={18} /> },
+      { name: 'Messages', path: '/dashboard/agent', icon: <MessageSquare size={18} />, action: 'chat' },
       { name: 'Availability', path: '/dashboard/agent/availability', icon: <Clock size={18} /> },
     ],
     admin: [
@@ -62,8 +65,7 @@ const Sidebar = () => {
     }}>
       <div style={{ padding: '24px', borderBottom: '1px solid var(--border)' }}>
         <Link to="/" className="nav-brand" style={{ fontSize: '1rem' }}>
-          <div className="nav-brand-icon" style={{ width: '28px', height: '28px' }}>O</div>
-          OBSIDIAN
+          RacedCore
         </Link>
       </div>
 
@@ -81,10 +83,18 @@ const Sidebar = () => {
 
         {navLinks.map((link) => {
           const isActive = location.pathname === link.path;
+          const handleClick = (e) => {
+            if (link.action === 'chat') {
+              e.preventDefault();
+              const chatBtn = document.getElementById('chat-widget-btn');
+              if (chatBtn) chatBtn.click();
+            }
+          };
           return (
-            <Link 
-              key={link.path} 
+            <Link
+              key={link.name}
               to={link.path}
+              onClick={handleClick}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -124,21 +134,25 @@ const Sidebar = () => {
 
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-          <div style={{ 
-            width: '36px', 
-            height: '36px', 
-            borderRadius: '50%', 
-            background: 'var(--accent-soft)',
-            border: '1px solid var(--accent-border)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--accent)',
-            fontWeight: 700,
-            fontSize: '0.85rem'
-          }}>
-            {user?.name?.[0]?.toUpperCase() || 'U'}
-          </div>
+          {user?.avatar ? (
+            <img src={user.avatar} alt="Profile" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--accent-border)' }} />
+          ) : (
+            <div style={{ 
+              width: '36px', 
+              height: '36px', 
+              borderRadius: '50%', 
+              background: 'var(--accent-soft)',
+              border: '1px solid var(--accent-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--accent)',
+              fontWeight: 700,
+              fontSize: '0.85rem'
+            }}>
+              {user?.name?.[0]?.toUpperCase() || 'U'}
+            </div>
+          )}
           <div style={{ overflow: 'hidden' }}>
             <div style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{user?.name}</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{user?.email}</div>

@@ -53,4 +53,14 @@ class ServiceController extends Controller
 
         return response()->json(['message' => 'Service deleted.']);
     }
+
+    public function specialties()
+    {
+        $specialties = Service::where('is_active', true)
+            ->select('id', 'name', 'description', 'category')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($specialties);
+    }
 }

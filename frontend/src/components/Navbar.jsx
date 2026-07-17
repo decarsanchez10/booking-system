@@ -14,10 +14,9 @@ const Navbar = () => {
 
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <div style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px' }}>
+      <div style={{ width: '100%', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 60px' }}>
         <Link to="/" className="nav-brand">
-          <div className="nav-brand-icon">O</div>
-          OBSIDIAN
+          RacedCore
         </Link>
 
         <div className="nav-center">

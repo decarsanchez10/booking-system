@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\KnowledgeBaseController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\AvailabilityController;
+use App\Http\Controllers\Api\ChatController;
 
 // ────────────────────────────────────────────────
 // PUBLIC ROUTES
@@ -23,6 +24,7 @@ Route::post('/auth/reset-password',  [AuthController::class, 'resetPassword']);
 
 // Public service listing
 Route::get('/services', [ServiceController::class, 'index']);
+Route::get('/services/specialties', [ServiceController::class, 'specialties']);
 
 // Public KB
 Route::get('/kb/categories', [KnowledgeBaseController::class, 'categories']);
@@ -44,6 +46,9 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
     Route::post('/notifications/read-all',  [NotificationController::class, 'markAllRead']);
 
+    // Profile Avatar
+    Route::post('/profile/avatar',  [UserController::class, 'uploadAvatar']);
+
     // ── USER ROUTES ──
     Route::middleware('role:user')->prefix('user')->group(function () {
         Route::get('/dashboard',        [UserController::class, 'dashboard']);
@@ -62,8 +67,13 @@ Route::middleware('auth:api')->group(function () {
 
         Route::get('/profile',          [UserController::class, 'profile']);
         Route::put('/profile',          [UserController::class, 'updateProfile']);
-        Route::post('/profile/avatar',  [UserController::class, 'uploadAvatar']);
         Route::put('/profile/password', [UserController::class, 'changePassword']);
+
+        // Chat
+        Route::get('/chat/conversations',                      [ChatController::class, 'conversations']);
+        Route::get('/chat/unread',                             [ChatController::class, 'unreadCount']);
+        Route::get('/chat/appointments/{appointment}',         [ChatController::class, 'index']);
+        Route::post('/chat/appointments/{appointment}',        [ChatController::class, 'store']);
     });
 
     // ── AGENT ROUTES ──
@@ -82,6 +92,13 @@ Route::middleware('auth:api')->group(function () {
 
         Route::get('/profile',          [AgentController::class, 'profile']);
         Route::put('/profile',          [AgentController::class, 'updateProfile']);
+        Route::put('/specialties',      [AgentController::class, 'updateSpecialties']);
+
+        // Chat
+        Route::get('/chat/conversations',                      [ChatController::class, 'conversations']);
+        Route::get('/chat/unread',                             [ChatController::class, 'unreadCount']);
+        Route::get('/chat/appointments/{appointment}',         [ChatController::class, 'index']);
+        Route::post('/chat/appointments/{appointment}',        [ChatController::class, 'store']);
     });
 
     // ── ADMIN ROUTES ──
@@ -117,5 +134,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/reports/overview',     [AdminController::class, 'reportsOverview']);
         Route::get('/settings',             [AdminController::class, 'getSettings']);
         Route::put('/settings',             [AdminController::class, 'updateSettings']);
+        Route::get('/roles',                [AdminController::class, 'roles']);
+        Route::get('/top-agents',           [AdminController::class, 'topAgents']);
     });
 });

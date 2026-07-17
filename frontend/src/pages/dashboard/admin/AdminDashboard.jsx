@@ -1,7 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Users, UserCheck, Calendar, Activity, Clock, ShieldAlert } from 'lucide-react';
+import api from '../../../lib/api';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area
@@ -28,6 +29,31 @@ const COLORS = ['#8b5cf6', '#a78bfa', '#06b6d4', '#67e8f9']; // Aurora palette
 
 const AdminDashboard = () => {
   const container = useRef();
+  const [stats, setStats] = useState(null);
+  const [topAgents, setTopAgents] = useState([]);
+
+  useEffect(() => {
+    fetchDashboard();
+    fetchTopAgents();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const res = await api.get('/admin/dashboard');
+      setStats(res.data);
+    } catch (err) {
+      console.error('Failed to fetch admin dashboard', err);
+    }
+  };
+
+  const fetchTopAgents = async () => {
+    try {
+      const res = await api.get('/admin/top-agents');
+      setTopAgents(res.data);
+    } catch (err) {
+      console.error('Failed to fetch top agents', err);
+    }
+  };
 
   useGSAP(() => {
     gsap.from('.dash-card', {
@@ -73,10 +99,10 @@ const AdminDashboard = () => {
       {/* Top Widgets */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '20px', marginBottom: '40px' }}>
         {[
-          { label: 'Total Users', value: '4,289', icon: <Users size={18} />, color: 'var(--text-primary)' },
-          { label: 'Active Agents', value: '24', icon: <UserCheck size={18} />, color: 'var(--text-primary)' },
-          { label: 'Appts Today', value: '142', icon: <Calendar size={18} />, color: 'var(--accent)' },
-          { label: 'Pending Req.', value: '18', icon: <Clock size={18} />, color: '#eab308' },
+          { label: 'Total Users', value: String(stats?.users || 0), icon: <Users size={18} />, color: 'var(--text-primary)' },
+          { label: 'Active Agents', value: String(stats?.agents || 0), icon: <UserCheck size={18} />, color: 'var(--text-primary)' },
+          { label: 'Appts Today', value: String(stats?.appointments_today || stats?.appointments || 0), icon: <Calendar size={18} />, color: 'var(--accent)' },
+          { label: 'Pending Req.', value: String(stats?.open_tickets || 0), icon: <Clock size={18} />, color: '#eab308' },
           { label: 'System Load', value: '14%', icon: <Activity size={18} />, color: '#22c55e' }
         ].map((stat, i) => (
           <div key={i} className="dash-card card" style={{ padding: '20px' }}>
@@ -181,12 +207,8 @@ const AdminDashboard = () => {
         <div className="dash-card card" style={{ padding: '24px' }}>
           <h3 style={{ fontSize: '1.1rem', marginBottom: '20px' }}>Agent Performance (Top 3)</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {[
-              { name: 'Sarah Jenkins', score: 98, resolved: 142 },
-              { name: 'David Chen', score: 95, resolved: 128 },
-              { name: 'Mike Ross', score: 91, resolved: 94 },
-            ].map((agent, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '16px', borderBottom: i !== 2 ? '1px solid var(--border)' : 'none' }}>
+            {topAgents.length > 0 ? topAgents.map((agent, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '16px', borderBottom: i !== topAgents.length - 1 ? '1px solid var(--border)' : 'none' }}>
                 <div>
                   <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '4px' }}>{agent.name}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{agent.resolved} issues resolved</div>
@@ -196,7 +218,9 @@ const AdminDashboard = () => {
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>CSAT Score</div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', padding: '20px 0' }}>No agents found.</p>
+            )}
           </div>
         </div>
 

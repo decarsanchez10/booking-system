@@ -29,7 +29,7 @@ const testimonials = [
     initials: 'AR',
   },
   {
-    text: 'As staff, I used to wait days for IT support. With Obsidian, I book a slot, describe the issue, and get a prepared technician the same day.',
+    text: 'As staff, I used to wait days for IT support. With RacedCore, I book a slot, describe the issue, and get a prepared technician the same day.',
     name: 'Dr. Patricia Kim',
     role: 'Faculty Member',
     organization: 'Biology Department',
@@ -43,7 +43,7 @@ const testimonials = [
     initials: 'MJ',
   },
   {
-    text: 'Obsidian gives our admin team visibility into requests, schedules, and resolution status without chasing email threads. It feels built for real operations.',
+    text: 'RacedCore gives our admin team visibility into requests, schedules, and resolution status without chasing email threads. It feels built for real operations.',
     name: 'Elena Santos',
     role: 'Operations Coordinator',
     organization: 'Student Services',
@@ -184,15 +184,9 @@ const Home = () => {
       ease: 'power2.out'
     });
 
-    // Feature cards
-    gsap.from('.feature-card', {
-      scrollTrigger: { trigger: '.features-grid', start: 'top 85%' },
-      opacity: 0,
-      y: 30,
-      stagger: 0.1,
-      duration: 0.6,
-      ease: 'power2.out'
-    });
+
+
+
 
     // Timeline steps
     gsap.from('.timeline-step', {
@@ -204,25 +198,9 @@ const Home = () => {
       ease: 'power2.out'
     });
 
-    // Specialty cards
-    gsap.from('.specialty-card', {
-      scrollTrigger: { trigger: '.specialties-grid', start: 'top 85%' },
-      opacity: 0,
-      y: 20,
-      stagger: 0.08,
-      duration: 0.5,
-      ease: 'power2.out'
-    });
 
-    // Why stats
-    gsap.from('.why-stat', {
-      scrollTrigger: { trigger: '.why-stats', start: 'top 85%' },
-      opacity: 0,
-      scale: 0.95,
-      stagger: 0.1,
-      duration: 0.5,
-      ease: 'power2.out'
-    });
+
+
 
     // Testimonials
     gsap.from('.testimonials-section', {
@@ -324,10 +302,7 @@ const Home = () => {
           <div className="hero-grid">
             <div className="hero-content">
               <div className="hero-badge">
-                <span className="hero-badge-dot"></span>
-                System Online — All Agents Available
               </div>
-
               <h1 className="hero-title">
                 <span className="hero-title-line" style={{ display: 'block' }}>FAST.</span>
                 <span className="hero-title-line" style={{ display: 'block' }}>RELIABLE.</span>
@@ -427,56 +402,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════
-          FEATURE CARDS
-          ═══════════════════════════════════════ */}
-      <section className="section">
-        <div className="section-container">
-          <div className="section-header">
-            <div className="section-label">// CAPABILITIES</div>
-            <h2 className="section-title">ENTERPRISE-GRADE IT SUPPORT</h2>
-            <p className="section-subtitle">
-              Everything you need to resolve technical issues quickly, efficiently,
-              and with full transparency.
-            </p>
-          </div>
 
-          <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon">🛡</div>
-              <h3 className="feature-title">Expert IT Agents</h3>
-              <p className="feature-desc">
-                Certified professionals specializing in hardware, software,
-                network infrastructure, and account management.
-              </p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🔐</div>
-              <h3 className="feature-title">Secure Authentication</h3>
-              <p className="feature-desc">
-                JWT-based authentication ensures your data and appointments
-                remain private and protected at all times.
-              </p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">📅</div>
-              <h3 className="feature-title">Easy Booking</h3>
-              <p className="feature-desc">
-                Book appointments in under 30 seconds with our streamlined
-                scheduling interface. No phone calls needed.
-              </p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">⚡</div>
-              <h3 className="feature-title">Real-Time Availability</h3>
-              <p className="feature-desc">
-                Live slot availability ensures you always see the most
-                up-to-date schedule with zero conflicts.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ═══════════════════════════════════════
           HOW IT WORKS
@@ -569,42 +495,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════
-          POPULAR SPECIALTIES
-          ═══════════════════════════════════════ */}
-      <section className="section" id="specialties">
-        <div className="section-container">
-          <div className="section-header">
-            <div className="section-label">// SPECIALTIES</div>
-            <h2 className="section-title">POPULAR CATEGORIES</h2>
-            <p className="section-subtitle">
-              Browse by category to find the right agent for your issue.
-            </p>
-          </div>
 
-          <div className="specialties-grid">
-            {[
-              { icon: '🖥', name: 'Hardware', agents: 4, wait: '12 min' },
-              { icon: '💻', name: 'Software', agents: 3, wait: '10 min' },
-              { icon: '🌐', name: 'Network', agents: 2, wait: '18 min' },
-              { icon: '🔑', name: 'Account Access', agents: 2, wait: '8 min' },
-              { icon: '🖨', name: 'Printer', agents: 1, wait: '15 min' },
-              { icon: '📧', name: 'Email', agents: 2, wait: '9 min' },
-            ].map((s) => (
-              <div className="specialty-card" key={s.name}>
-                <div className="specialty-icon">{s.icon}</div>
-                <div className="specialty-info">
-                  <h4>{s.name}</h4>
-                  <div className="specialty-meta">
-                    <span>👤 {s.agents} agents</span>
-                    <span>⏱ ~{s.wait}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+
 
       {/* ═══════════════════════════════════════
           WHY CHOOSE US
@@ -612,7 +504,7 @@ const Home = () => {
       <section className="section" id="about">
         <div className="section-container">
           <div className="section-header">
-            <div className="section-label">// WHY OBSIDIAN</div>
+            <div className="section-label">// WHY RACEDCORE</div>
             <h2 className="section-title">TRUSTED BY THOUSANDS</h2>
             <p className="section-subtitle">
               Our track record speaks for itself. Fast resolutions, expert agents,
@@ -625,7 +517,7 @@ const Home = () => {
               <div className="section-label">// PLATFORM OVERVIEW</div>
               <h3>Built for fast campus IT support.</h3>
               <p>
-                Obsidian keeps appointment booking, ticket tracking, agent schedules,
+                RacedCore keeps appointment booking, ticket tracking, agent schedules,
                 and support updates in one place so students and staff know exactly
                 where their request stands.
               </p>
@@ -666,7 +558,7 @@ const Home = () => {
             <div className="section-label testimonial-reveal">// FEEDBACK</div>
             <h2 className="section-title testimonial-reveal">WHAT USERS SAY</h2>
             <p className="section-subtitle testimonial-reveal">
-              Hear from students and staff who rely on Obsidian Help Desk every day.
+              Hear from students and staff who rely on RacedCore Help Desk every day.
             </p>
           </div>
 
@@ -763,13 +655,7 @@ const Home = () => {
       <footer className="footer">
         <div className="section-container">
           <div className="footer-grid">
-            <div>
-              <div className="footer-brand">OBSIDIAN <span>HELP DESK</span></div>
-              <p className="footer-desc">
-                Enterprise-grade IT support booking for students and staff.
-                Fast scheduling. Certified agents. Reliable resolutions.
-              </p>
-            </div>
+
 
             <div>
               <h5 className="footer-heading">Quick Links</h5>
@@ -794,7 +680,7 @@ const Home = () => {
             <div>
               <h5 className="footer-heading">Contact</h5>
               <ul className="footer-links">
-                <li><a href="mailto:support@obsidian.edu">support@obsidian.edu</a></li>
+                <li><a href="mailto:support@racedcore.org">support@racedcore.edu</a></li>
                 <li><a href="tel:+18001234567">(800) 123-4567</a></li>
                 <li><a href="#">IT Building, Room 204</a></li>
                 <li><a href="#">Mon–Fri, 8AM–8PM</a></li>
@@ -803,7 +689,7 @@ const Home = () => {
           </div>
 
           <div className="footer-bottom">
-            <span>© 2026 Obsidian Help Desk. All rights reserved.</span>
+            <span>© 2026 RacedCore Help Desk. All rights reserved.</span>
             <div className="footer-socials">
               <a href="#" aria-label="Twitter">𝕏</a>
               <a href="#" aria-label="GitHub">⌘</a>

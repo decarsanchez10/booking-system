@@ -37,17 +37,9 @@ const mockNotifications = [
     read: false,
   },
   {
-    id: 3,
-    type: 'alert',
-    title: 'Scheduled Maintenance',
-    message: 'System maintenance scheduled for July 20, 2026 from 2AM–4AM.',
-    time: '1 day ago',
-    read: true,
-  },
-  {
     id: 4,
     type: 'info',
-    title: 'Welcome to Obsidian IT Support!',
+    title: 'Welcome to RacedCore IT Support!',
     message: 'Your account is set up. Book your first appointment or browse the knowledge base.',
     time: '3 days ago',
     read: true,

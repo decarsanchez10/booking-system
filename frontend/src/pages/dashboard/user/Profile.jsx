@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useAuth } from '../../../context/AuthContext';
+import api from '../../../lib/api';
 import { Camera, Shield, Bell, Save, X, Eye, EyeOff, CheckCircle } from 'lucide-react';
 
 /* ── tiny re-usable modal ─────────────────────────── */
@@ -28,16 +29,17 @@ const Modal = ({ title, children, onClose }) => (
 );
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   /* form state */
   const [firstName, setFirstName] = useState(user?.name?.split(' ')[0] || '');
-  const [lastName, setLastName]   = useState(user?.name?.split(' ')[1] || '');
-  const [phone, setPhone]         = useState('+1 (555) 123-4567');
-  const [department, setDepartment] = useState('Computer Science');
+  const [lastName, setLastName]   = useState(user?.name?.split(' ').slice(1).join(' ') || '');
+  const [phone, setPhone]         = useState(user?.phone || '');
+  const [department, setDepartment] = useState(user?.department || 'Computer Science');
 
-  /* avatar */
-  const [avatar, setAvatar] = useState(null); // data-url or null
+  /* avatar – initialise from backend/stored URL */
+  const [avatar, setAvatar] = useState(user?.avatar || null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef();
 
   /* save */
@@ -73,32 +75,63 @@ const Profile = () => {
 
   /* ── handlers ── */
   const handleAvatarClick = () => fileInputRef.current?.click();
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Show preview immediately
     const reader = new FileReader();
     reader.onload = ev => setAvatar(ev.target.result);
     reader.readAsDataURL(file);
+    // Upload to server
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      const { data } = await api.post('/profile/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      // Update context so sidebar & other views see new avatar immediately
+      updateUser({ avatar: data.avatar_url });
+      setAvatar(data.avatar_url);
+    } catch (err) {
+      console.error('Avatar upload failed', err);
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     setIsSaving(true);
     setSaved(false);
-    setTimeout(() => { setIsSaving(false); setSaved(true); setTimeout(() => setSaved(false), 3000); }, 1000);
+    try {
+      const name = [firstName, lastName].filter(Boolean).join(' ');
+      await api.put('/user/profile', { name, phone, department });
+      updateUser({ name, phone, department });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error('Save failed', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handlePasswordSave = () => {
+  const handlePasswordSave = async () => {
     setPwError('');
     if (!currentPw) return setPwError('Enter your current password.');
     if (newPw.length < 6) return setPwError('New password must be at least 6 characters.');
     if (newPw !== confirmPw) return setPwError('Passwords do not match.');
     setSavingPw(true);
-    setTimeout(() => {
-      setSavingPw(false);
+    try {
+      await api.put('/user/profile/password', { current_password: currentPw, password: newPw, password_confirmation: confirmPw });
       setPwSuccess(true);
       setTimeout(() => { setShowPwModal(false); setPwSuccess(false); setCurrentPw(''); setNewPw(''); setConfirmPw(''); }, 1500);
-    }, 1000);
+    } catch (err) {
+      setPwError(err?.response?.data?.message || 'Failed to update password.');
+    } finally {
+      setSavingPw(false);
+    }
   };
 
   const handleEnable2FA = () => {
@@ -207,25 +240,29 @@ const Profile = () => {
               <button
                 onClick={handleAvatarClick}
                 title="Upload profile photo"
+                disabled={uploadingAvatar}
                 style={{
                   position: 'absolute', bottom: 0, right: 0,
                   width: '36px', height: '36px', borderRadius: '50%',
                   background: 'var(--bg-elevated, #1a1a1f)',
                   border: '2px solid var(--accent)',
                   color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', transition: 'background 0.2s',
+                  cursor: uploadingAvatar ? 'not-allowed' : 'pointer', transition: 'background 0.2s',
+                  opacity: uploadingAvatar ? 0.6 : 1,
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-soft)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-elevated, #1a1a1f)'}
               >
-                <Camera size={16} />
+                {uploadingAvatar ? '…' : <Camera size={16} />}
               </button>
               <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
             </div>
 
-            {avatar && (
+            {avatar && avatar !== user?.avatar && (
               <button
-                onClick={() => setAvatar(null)}
+                onClick={async () => {
+                  setAvatar(user?.avatar || null);
+                }}
                 style={{ fontSize: '0.78rem', color: '#ff6b6b', background: 'transparent', border: 'none', cursor: 'pointer', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px', margin: '0 auto 8px' }}
               >
                 <X size={12} /> Remove photo
@@ -233,9 +270,9 @@ const Profile = () => {
             )}
 
             <h2 style={{ fontSize: '1.2rem', marginBottom: '4px' }}>{firstName} {lastName}</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>{department}</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>{user?.email}</p>
             <div style={{ display: 'inline-block', padding: '4px 12px', background: 'var(--overlay-soft)', borderRadius: '100px', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
-              ID: STU-849201
+              ID: {user?.id}
             </div>
           </div>
 
@@ -301,13 +338,13 @@ const Profile = () => {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginBottom: '8px' }}>Department / Major</label>
-                  <select value={department} onChange={e => setDepartment(e.target.value)}
-                    style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }}>
-                    <option>Computer Science</option>
-                    <option>Engineering</option>
-                    <option>Business</option>
-                    <option>Arts</option>
-                  </select>
+                  <input 
+                    type="text" 
+                    value={department} 
+                    onChange={e => setDepartment(e.target.value)}
+                    placeholder="e.g., Computer Science"
+                    style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }}
+                  />
                 </div>
               </div>
             </form>

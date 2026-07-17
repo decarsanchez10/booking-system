@@ -27,7 +27,7 @@ const Contact = () => {
   };
 
   const contactInfo = [
-    { icon: Mail, label: 'Email Us', value: 'support@obsidian.com', sub: 'Response within 24 hours' },
+    { icon: Mail, label: 'Email Us', value: 'support@racedcore.com', sub: 'Response within 24 hours' },
     { icon: Phone, label: 'Call Us', value: '+1 (800) 555-0199', sub: 'Mon–Fri 8am–6pm' },
     { icon: MapPin, label: 'Visit Us', value: '123 Tech Plaza, Suite 400', sub: 'San Francisco, CA 94102' },
     { icon: Clock, label: 'Emergency Line', value: '+1 (800) 555-0911', sub: '24/7 Critical Support' },

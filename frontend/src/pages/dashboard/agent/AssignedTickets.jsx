@@ -1,15 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Ticket, Search, Filter, X, CheckCircle } from 'lucide-react';
+import api from '../../../lib/api';
 
 const AssignedTickets = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedTicket, setSelectedTicket] = useState(null);
-  const [ticketList, setTicketList] = useState([
-    { id: 'TKT-1029', subject: 'Laptop battery not charging', user: 'j.doe@example.com', status: 'Open', priority: 'High', date: '2026-07-15', description: 'The laptop battery stopped charging. The charger LED does not light up at all.' },
-    { id: 'TKT-1028', subject: 'Need access to VPN', user: 'm.smith@example.com', status: 'In Progress', priority: 'Medium', date: '2026-07-14', description: 'User needs VPN credentials configured for remote work from home.' },
-  ]);
+  const [ticketList, setTicketList] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
+
+  const fetchTickets = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/agent/tickets');
+      setTicketList(res.data.data || res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch tickets', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -20,9 +35,15 @@ const AssignedTickets = () => {
     }
   };
 
-  const handleResolve = (id) => {
-    setTicketList(prev => prev.map(t => t.id === id ? { ...t, status: 'Resolved' } : t));
-    setSelectedTicket(prev => prev ? { ...prev, status: 'Resolved' } : null);
+  const handleResolve = async (id) => {
+    try {
+      await api.put(`/agent/tickets/${id}/status`, { status: 'Resolved' });
+      setTicketList(prev => prev.map(t => t.id === id ? { ...t, status: 'Resolved' } : t));
+      setSelectedTicket(prev => prev ? { ...prev, status: 'Resolved' } : null);
+    } catch (err) {
+      console.error('Failed to resolve ticket', err);
+      alert('Failed to resolve ticket');
+    }
   };
 
   return (

@@ -7,18 +7,29 @@ use App\Models\Ticket;
 use App\Models\TicketMessage;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class TicketController extends Controller
 {
     public function userIndex(Request $request)
     {
-        return response()->json(Ticket::where('user_id', $request->user()->id)->latest()->paginate(20));
+        return response()->json(
+            Ticket::with('agent:id,name,email')
+                ->where('user_id', $request->user()->id)
+                ->latest()
+                ->paginate(20)
+        );
     }
 
     public function agentIndex(Request $request)
     {
-        return response()->json(Ticket::where('agent_id', $request->user()->id)->latest()->paginate(20));
+        return response()->json(
+            Ticket::with('user:id,name,email')
+                ->where('agent_id', $request->user()->id)
+                ->latest()
+                ->paginate(20)
+        );
     }
 
     public function adminIndex()
@@ -35,10 +46,12 @@ class TicketController extends Controller
             'priority' => 'nullable|in:Low,Medium,High,Urgent',
         ]);
 
-        $data['user_id'] = $request->user()->id;
-        $data['status'] = 'Open';
+        return DB::transaction(function () use ($data, $request) {
+            $data['user_id'] = $request->user()->id;
+            $data['status'] = 'Open';
 
-        return response()->json(Ticket::create($data), 201);
+            return response()->json(Ticket::create($data)->load('agent:id,name,email'), 201);
+        });
     }
 
     public function show(Request $request, Ticket $ticket)

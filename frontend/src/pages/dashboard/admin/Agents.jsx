@@ -17,15 +17,6 @@ const Modal = ({ title, children, onClose }) => (
 
 const inputStyle = { width: '100%', padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' };
 
-const INITIAL_AGENTS = [
-  { id: 'AGT-01', name: 'David Chen', specialty: 'Software', rating: 4.9, completed: 128, load: 85, avatar: 'DC', active: true },
-  { id: 'AGT-02', name: 'Mike Ross', specialty: 'Network', rating: 4.8, completed: 94, load: 60, avatar: 'MR', active: true },
-  { id: 'AGT-03', name: 'Sarah Jenkins', specialty: 'Hardware', rating: 5.0, completed: 142, load: 90, avatar: 'SJ', active: true },
-  { id: 'AGT-04', name: 'Elena Rodriguez', specialty: 'Account', rating: 4.7, completed: 210, load: 75, avatar: 'ER', active: true },
-  { id: 'AGT-05', name: 'James Wilson', specialty: 'Hardware', rating: 4.6, completed: 88, load: 40, avatar: 'JW', active: true },
-  { id: 'AGT-06', name: 'Anita Patel', specialty: 'Software', rating: 4.9, completed: 156, load: 95, avatar: 'AP', active: true },
-];
-
 const toAgentCard = (user) => {
   const initials = user.name
     ?.split(' ')
@@ -39,25 +30,27 @@ const toAgentCard = (user) => {
     id: user.id,
     name: user.name,
     email: user.email,
-    specialty: 'IT Support',
-    rating: 0,
-    completed: 0,
-    load: 0,
-    avatar: initials,
+    specialty: user.specialty || 'IT Support',
+    rating: user.rating || 0,
+    completed: user.completed_sessions || 0,
+    load: user.active_tickets || 0,
+    avatar: user.avatar || null, // URL or null, fallback to initials below
+    initials,
     active: true,
   };
 };
 
 const Agents = () => {
   const container = useRef();
-  const [agents, setAgents] = useState(INITIAL_AGENTS);
+  const [agents, setAgents] = useState([]);
   const [loadError, setLoadError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [specialties, setSpecialties] = useState([]);
 
   // Add agent modal
   const [showAdd, setShowAdd] = useState(false);
   const [addName, setAddName] = useState('');
-  const [addSpecialty, setAddSpecialty] = useState('Software');
+  const [addSpecialty, setAddSpecialty] = useState('');
   const [addSuccess, setAddSuccess] = useState(false);
 
   // Edit agent modal
@@ -92,6 +85,22 @@ const Agents = () => {
     loadAgents();
   }, []);
 
+  useEffect(() => {
+    const loadSpecialties = async () => {
+      try {
+        const { data } = await api.get('/services/specialties');
+        setSpecialties(data);
+        if (data.length > 0) {
+          setAddSpecialty(data[0].name);
+        }
+      } catch (error) {
+        console.error('Failed to load specialties:', error);
+      }
+    };
+
+    loadSpecialties();
+  }, []);
+
   const filtered = agents.filter(a => a.name.toLowerCase().includes(searchTerm.toLowerCase()) || a.specialty.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleAdd = () => {
@@ -99,7 +108,7 @@ const Agents = () => {
     const initials = addName.split(' ').map(n => n[0]).join('').toUpperCase();
     setAgents(prev => [...prev, { id: `AGT-${String(prev.length + 1).padStart(2, '0')}`, name: addName, specialty: addSpecialty, rating: 0, completed: 0, load: 0, avatar: initials, active: true }]);
     setAddSuccess(true);
-    setTimeout(() => { setShowAdd(false); setAddSuccess(false); setAddName(''); setAddSpecialty('Software'); }, 1500);
+    setTimeout(() => { setShowAdd(false); setAddSuccess(false); setAddName(''); setAddSpecialty(specialties.length > 0 ? specialties[0].name : ''); }, 1500);
   };
 
   const openEdit = (agent) => { setEditAgent(agent); setEditName(agent.name); setEditSpecialty(agent.specialty); };
@@ -132,7 +141,7 @@ const Agents = () => {
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Specialty</label>
                 <select value={addSpecialty} onChange={e => setAddSpecialty(e.target.value)} style={inputStyle}>
-                  {['Software', 'Hardware', 'Network', 'Account', 'Email', 'Security'].map(s => <option key={s}>{s}</option>)}
+                  {specialties.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
                 </select>
               </div>
               <button className="btn-primary" onClick={handleAdd} disabled={!addName} style={{ width: '100%', padding: '12px', opacity: !addName ? 0.5 : 1 }}>Add Agent</button>
@@ -146,12 +155,12 @@ const Agents = () => {
         <Modal title={`Edit ${editAgent.name}`} onClose={() => setEditAgent(null)}>
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Full Name</label>
-            <input type="text" value={editName} onChange={e => setEditName(e.target.value)} style={inputStyle} />
+            <input type="text" value={editName} disabled style={{ ...inputStyle, background: 'var(--overlay-subtle)', color: 'var(--text-muted)', cursor: 'not-allowed' }} />
           </div>
           <div style={{ marginBottom: '24px' }}>
             <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Specialty</label>
             <select value={editSpecialty} onChange={e => setEditSpecialty(e.target.value)} style={inputStyle}>
-              {['Software', 'Hardware', 'Network', 'Account', 'Email', 'Security'].map(s => <option key={s}>{s}</option>)}
+              {specialties.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
             </select>
           </div>
           <button className="btn-primary" onClick={handleEditSave} style={{ width: '100%', padding: '12px' }}>Save Changes</button>
@@ -203,7 +212,11 @@ const Agents = () => {
           <div key={agent.id} className="agent-card card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', opacity: agent.active ? 1 : 0.5 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div style={{ display: 'flex', gap: '16px' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--accent-soft)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '1.2rem', fontWeight: 700 }}>{agent.avatar}</div>
+                {agent.avatar ? (
+                  <img src={agent.avatar} alt={agent.name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--accent-border)' }} />
+                ) : (
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--accent-soft)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '1.2rem', fontWeight: 700 }}>{agent.initials}</div>
+                )}
                 <div>
                   <h3 style={{ fontSize: '1.1rem', marginBottom: '4px' }}>{agent.name}</h3>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>

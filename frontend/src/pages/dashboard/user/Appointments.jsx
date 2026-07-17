@@ -3,17 +3,13 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Calendar, Clock, Monitor, Wifi, Database, Search, MoreVertical, CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
 
-const INITIAL_APPOINTMENTS = [
-  { id: 'APT-1042', agent: 'Sarah Jenkins', type: 'Hardware', date: 'Today', time: '02:30 PM', status: 'upcoming', issue: 'MacBook Pro Battery Replacement Consultation' },
-  { id: 'APT-1038', agent: 'Mike Ross', type: 'Network', date: 'Nov 12, 2023', time: '10:00 AM', status: 'completed', issue: 'Campus Wi-Fi Connectivity' },
-  { id: 'APT-1035', agent: 'David Chen', type: 'Software', date: 'Oct 28, 2023', time: '01:15 PM', status: 'completed', issue: 'Software Installation (Adobe CC)' },
-  { id: 'APT-1022', agent: 'Elena Rodriguez', type: 'Account', date: 'Sep 15, 2023', time: '09:30 AM', status: 'cancelled', issue: 'Password Reset / MFA Issue' },
-  { id: 'APT-1045', agent: 'James Wilson', type: 'Hardware', date: 'Tomorrow', time: '11:00 AM', status: 'pending', issue: 'Monitor Display Flickering' },
-];
+import api from '../../../lib/api';
+
+const INITIAL_APPOINTMENTS = [];
 
 const getStatusStyle = (status) => {
-  switch (status) {
-    case 'upcoming': return { text: '#22c55e', bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.2)', icon: <AlertCircle size={14} /> };
+  switch (status?.toLowerCase()) {
+    case 'approved': return { text: '#22c55e', bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.2)', icon: <AlertCircle size={14} /> };
     case 'completed': return { text: 'var(--text-secondary)', bg: 'var(--overlay-soft)', border: 'var(--border)', icon: <CheckCircle size={14} /> };
     case 'cancelled': return { text: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.2)', icon: <XCircle size={14} /> };
     case 'pending': return { text: '#eab308', bg: 'rgba(234,179,8,0.1)', border: 'rgba(234,179,8,0.2)', icon: <Clock size={14} /> };
@@ -42,10 +38,23 @@ const Modal = ({ title, children, onClose }) => (
 );
 
 const Appointments = () => {
-  const [appointments, setAppointments] = useState(INITIAL_APPOINTMENTS);
+  const [appointments, setAppointments] = useState([]);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [menuOpen, setMenuOpen] = useState(null);
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  const fetchAppointments = async () => {
+    try {
+      const res = await api.get('/user/appointments');
+      setAppointments(res.data.data);
+    } catch (err) {
+      console.error('Failed to fetch appointments', err);
+    }
+  };
 
   // Cancel confirmation modal
   const [cancelTarget, setCancelTarget] = useState(null);
@@ -72,20 +81,33 @@ const Appointments = () => {
   }, [menuOpen]);
 
   const filtered = appointments.filter(apt => {
-    const matchFilter = filter === 'all' || apt.status === filter;
-    const matchSearch = apt.issue.toLowerCase().includes(search.toLowerCase()) || apt.agent.toLowerCase().includes(search.toLowerCase()) || apt.id.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === 'all' || apt.status?.toLowerCase() === filter;
+    const searchLower = search.toLowerCase();
+    const matchSearch = (apt.description && apt.description.toLowerCase().includes(searchLower)) ||
+                        (apt.agent?.name && apt.agent.name.toLowerCase().includes(searchLower)) ||
+                        apt.id.toString().includes(searchLower);
     return matchFilter && matchSearch;
   });
 
-  const handleCancel = (id) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'cancelled' } : a));
+  const handleCancel = async (id) => {
+    try {
+      await api.put(`/user/appointments/${id}/cancel`);
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' } : a));
+    } catch (err) {
+      console.error('Failed to cancel', err);
+    }
     setCancelTarget(null);
   };
 
-  const handleReschedule = () => {
+  const handleReschedule = async () => {
     if (!newDate) return;
-    const formattedDate = new Date(newDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    setAppointments(prev => prev.map(a => a.id === rescheduleTarget ? { ...a, date: formattedDate, time: newTime || a.time, status: 'pending' } : a));
+    try {
+      const formattedDate = newDate + (newTime ? ` ${newTime}:00` : ' 00:00:00');
+      await api.put(`/user/appointments/${rescheduleTarget}/reschedule`, { appointment_date: formattedDate });
+      fetchAppointments(); // Re-fetch to get updated state
+    } catch (err) {
+      console.error('Failed to reschedule', err);
+    }
     setRescheduleTarget(null);
     setNewDate('');
     setNewTime('');
@@ -98,7 +120,7 @@ const Appointments = () => {
       {cancelTarget && (
         <Modal title="Cancel Appointment" onClose={() => setCancelTarget(null)}>
           <p style={{ color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.6' }}>
-            Are you sure you want to cancel <strong style={{ color: 'var(--text-primary)' }}>{appointments.find(a => a.id === cancelTarget)?.issue}</strong>? This action cannot be undone.
+            Are you sure you want to cancel <strong style={{ color: 'var(--text-primary)' }}>{appointments.find(a => a.id === cancelTarget)?.description}</strong>? This action cannot be undone.
           </p>
           <div style={{ display: 'flex', gap: '12px' }}>
             <button className="btn-secondary" style={{ flex: 1, padding: '12px' }} onClick={() => setCancelTarget(null)}>Keep Appointment</button>
@@ -111,25 +133,25 @@ const Appointments = () => {
       {viewTicketTarget && (
         <Modal title={`Appointment ${viewTicketTarget.id}`} onClose={() => setViewTicketTarget(null)}>
           <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Issue</div>
-            <div style={{ fontWeight: 600, fontSize: '1.05rem' }}>{viewTicketTarget.issue}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Description</div>
+            <div style={{ fontWeight: 600, fontSize: '1.05rem' }}>{viewTicketTarget.description}</div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Agent</div>
-              <div style={{ fontWeight: 600 }}>{viewTicketTarget.agent}</div>
+              <div style={{ fontWeight: 600 }}>{viewTicketTarget.agent?.name || 'Unassigned'}</div>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Type</div>
-              <div style={{ fontWeight: 600 }}>{viewTicketTarget.type}</div>
+              <div style={{ fontWeight: 600 }}>{viewTicketTarget.category}</div>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Date</div>
-              <div style={{ fontWeight: 600 }}>{viewTicketTarget.date}</div>
+              <div style={{ fontWeight: 600 }}>{new Date(viewTicketTarget.appointment_date).toLocaleDateString()}</div>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Time</div>
-              <div style={{ fontWeight: 600 }}>{viewTicketTarget.time}</div>
+              <div style={{ fontWeight: 600 }}>{new Date(viewTicketTarget.appointment_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
             </div>
           </div>
           <div style={{ padding: '12px 16px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '10px', color: '#22c55e', fontSize: '0.9rem', marginBottom: '20px' }}>
@@ -145,7 +167,7 @@ const Appointments = () => {
       {rescheduleTarget && (
         <Modal title="Reschedule Appointment" onClose={() => setRescheduleTarget(null)}>
           <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.9rem' }}>
-            Rescheduling: <strong style={{ color: 'var(--text-primary)' }}>{appointments.find(a => a.id === rescheduleTarget)?.issue}</strong>
+            Rescheduling: <strong style={{ color: 'var(--text-primary)' }}>{appointments.find(a => a.id === rescheduleTarget)?.description}</strong>
           </p>
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px' }}>New Date</label>
@@ -177,7 +199,7 @@ const Appointments = () => {
       {/* Filters */}
       <div className="card" style={{ padding: '20px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {['all', 'upcoming', 'pending', 'completed', 'cancelled'].map(f => (
+          {['all', 'approved', 'pending', 'completed', 'cancelled'].map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{
               padding: '8px 16px',
               background: filter === f ? 'var(--text-primary)' : 'transparent',
@@ -215,25 +237,29 @@ const Appointments = () => {
               <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                 <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
                   <div style={{ minWidth: '120px' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', marginBottom: '4px' }}>{apt.date}</div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{apt.time}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', marginBottom: '4px' }}>{new Date(apt.appointment_date).toLocaleDateString()}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{new Date(apt.appointment_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                   </div>
                   <div style={{ width: '1px', height: '40px', background: 'var(--border)' }} />
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <h3 style={{ fontSize: '1.05rem', margin: 0 }}>{apt.issue}</h3>
+                      <h3 style={{ fontSize: '1.05rem', margin: 0 }}>{apt.description || apt.category}</h3>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600, color: s.text, background: s.bg, border: `1px solid ${s.border}` }}>
                         {s.icon} {apt.status}
                       </span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '0.6rem', fontWeight: 700 }}>
-                          {apt.agent.split(' ').map(n => n[0]).join('')}
-                        </div>
-                        {apt.agent}
+                        {apt.agent?.avatar ? (
+                          <img src={apt.agent.avatar} alt="Agent" style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '0.6rem', fontWeight: 700 }}>
+                            {apt.agent?.name ? apt.agent.name.charAt(0) : '?'}
+                          </div>
+                        )}
+                        {apt.agent?.name || 'Unassigned'}
                       </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>{getTypeIcon(apt.type)} {apt.type}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>{getTypeIcon(apt.category)} {apt.category}</span>
                       <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>ID: {apt.id}</span>
                     </div>
                   </div>
@@ -241,7 +267,7 @@ const Appointments = () => {
 
                 {/* Action Buttons */}
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  {(apt.status === 'upcoming' || apt.status === 'pending') && (
+                  {(apt.status?.toLowerCase() === 'approved' || apt.status?.toLowerCase() === 'pending') && (
                     <>
                       <button className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.8rem' }}
                         onClick={() => setRescheduleTarget(apt.id)}>Reschedule</button>

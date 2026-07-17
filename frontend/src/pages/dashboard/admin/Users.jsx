@@ -14,26 +14,52 @@ const Modal = ({ title, children, onClose, width }) => (
   </div>
 );
 
-const INITIAL_USERS = [
-  { id: 'USR-8921', name: 'Alex Rivera', email: 'arivera@obsidian.edu', dept: 'Computer Science', role: 'Student', status: 'Active', lastLogin: '2 mins ago' },
-  { id: 'USR-8922', name: 'Dr. Patricia Kim', email: 'pkim@obsidian.edu', dept: 'Biology', role: 'Faculty', status: 'Active', lastLogin: '1 hour ago' },
-  { id: 'USR-8923', name: 'Marcus Johnson', email: 'mjohnson@obsidian.edu', dept: 'Business', role: 'Student', status: 'Suspended', lastLogin: '5 days ago' },
-  { id: 'USR-8924', name: 'Sarah Jenkins', email: 'sjenkins@obsidian.edu', dept: 'IT Services', role: 'Agent', status: 'Active', lastLogin: 'Online' },
-  { id: 'USR-8925', name: 'James Wilson', email: 'jwilson@obsidian.edu', dept: 'Engineering', role: 'Student', status: 'Active', lastLogin: 'Yesterday' },
-];
+import { useEffect } from 'react';
+import api from '../../../lib/api';
 
 const Users = () => {
   const container = useRef();
-  const [users, setUsers] = useState(INITIAL_USERS);
+  const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [roles, setRoles] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchUsers();
+    fetchRoles();
+  }, []);
+
+  const fetchRoles = async () => {
+    try {
+      const res = await api.get('/admin/roles');
+      setRoles(res.data);
+      if (res.data.length > 0 && addRole === 'user') {
+        setAddRole(res.data[0].name);
+      }
+    } catch (error) {
+      console.error('Failed to fetch roles:', error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/admin/users');
+      setUsers(res.data.data || res.data);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Add user modal
   const [showAdd, setShowAdd] = useState(false);
   const [addName, setAddName] = useState('');
   const [addEmail, setAddEmail] = useState('');
   const [addDept, setAddDept] = useState('');
-  const [addRole, setAddRole] = useState('Student');
+  const [addRole, setAddRole] = useState('user');
   const [addSuccess, setAddSuccess] = useState(false);
 
   // Edit user modal
@@ -46,39 +72,75 @@ const Users = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   useGSAP(() => {
-    gsap.from('.table-row', { opacity: 0, y: 10, stagger: 0.05, duration: 0.4, ease: 'power2.out' });
-  }, { scope: container, dependencies: [filter] });
+    if (filtered.length > 0) {
+      gsap.from('.table-row', { opacity: 0, y: 10, stagger: 0.05, duration: 0.4, ease: 'power2.out' });
+    }
+  }, { scope: container, dependencies: [filter, users] });
 
   const filtered = users.filter(u => {
+    const roleName = u.roles?.[0]?.name || 'user';
     const matchFilter = filter === 'all'
-      || (filter === 'students' && u.role === 'Student')
-      || (filter === 'faculty' && u.role === 'Faculty')
-      || (filter === 'agents' && u.role === 'Agent')
-      || (filter === 'suspended' && u.status === 'Suspended');
+      || (filter === 'users' && roleName === 'user')
+      || (filter === 'agents' && roleName === 'agent')
+      || (filter === 'admins' && roleName === 'admin');
     const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
     return matchFilter && matchSearch;
   });
 
-  const handleAddUser = () => {
+  const handleAddUser = async () => {
     if (!addName || !addEmail) return;
-    const newUser = {
-      id: `USR-${Math.floor(Math.random() * 9000) + 1000}`,
-      name: addName, email: addEmail, dept: addDept || 'Unassigned',
-      role: addRole, status: 'Active', lastLogin: 'Never',
-    };
-    setUsers(prev => [newUser, ...prev]);
-    setAddSuccess(true);
-    setTimeout(() => { setShowAdd(false); setAddSuccess(false); setAddName(''); setAddEmail(''); setAddDept(''); setAddRole('Student'); }, 1500);
+    setLoading(true);
+    try {
+      const res = await api.post('/admin/users', {
+        name: addName,
+        email: addEmail,
+        role: addRole.toLowerCase(),
+        password: 'Password123!',
+        password_confirmation: 'Password123!'
+      });
+      setUsers(prev => [res.data, ...prev]);
+      setAddSuccess(true);
+      setTimeout(() => { setShowAdd(false); setAddSuccess(false); setAddName(''); setAddEmail(''); setAddDept(''); setAddRole('user'); }, 1500);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to add user');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEditSave = () => {
-    setUsers(prev => prev.map(u => u.id === editUser.id ? { ...u, name: editName, dept: editDept, role: editRole } : u));
-    setEditUser(null);
+  const handleEditSave = async () => {
+    setLoading(true);
+    try {
+      const res = await api.put(`/admin/users/${editUser.id}`, { name: editName });
+      if (editRole.toLowerCase() !== editUser.roles?.[0]?.name) {
+        await api.put(`/admin/users/${editUser.id}/role`, { role: editRole.toLowerCase() });
+      }
+      fetchUsers();
+      setEditUser(null);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update user');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const openEdit = (u) => { setEditUser(u); setEditName(u.name); setEditDept(u.dept); setEditRole(u.role); };
+  const openEdit = (u) => { setEditUser(u); setEditName(u.name); setEditRole(u.roles?.[0]?.name || 'user'); };
 
-  const handleDelete = (id) => { setUsers(prev => prev.filter(u => u.id !== id)); setDeleteTarget(null); };
+  const handleDelete = async (id) => {
+    setLoading(true);
+    try {
+      await api.delete(`/admin/users/${id}`);
+      setUsers(prev => prev.filter(u => u.id !== id));
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete user');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleToggleSuspend = (id) => {
     setUsers(prev => prev.map(u => u.id === id ? { ...u, status: u.status === 'Active' ? 'Suspended' : 'Active' } : u));
@@ -104,19 +166,13 @@ const Users = () => {
               </div>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Email *</label>
-                <input type="email" value={addEmail} onChange={e => setAddEmail(e.target.value)} placeholder="john@obsidian.edu" style={inputStyle} />
+                <input type="email" value={addEmail} onChange={e => setAddEmail(e.target.value)} placeholder="john@gmail.com" style={inputStyle} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Department</label>
-                  <input type="text" value={addDept} onChange={e => setAddDept(e.target.value)} placeholder="Computer Science" style={inputStyle} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Role</label>
-                  <select value={addRole} onChange={e => setAddRole(e.target.value)} style={inputStyle}>
-                    <option>Student</option><option>Faculty</option><option>Agent</option>
-                  </select>
-                </div>
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Role</label>
+                <select value={addRole} onChange={e => setAddRole(e.target.value)} style={inputStyle}>
+                  {roles.map(role => <option key={role.id} value={role.name}>{role.name}</option>)}
+                </select>
               </div>
               <button className="btn-primary" onClick={handleAddUser} disabled={!addName || !addEmail} style={{ width: '100%', padding: '12px', opacity: (!addName || !addEmail) ? 0.5 : 1 }}>Add User</button>
             </>
@@ -129,19 +185,13 @@ const Users = () => {
         <Modal title={`Edit ${editUser.name}`} onClose={() => setEditUser(null)}>
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Full Name</label>
-            <input type="text" value={editName} onChange={e => setEditName(e.target.value)} style={inputStyle} />
+            <input type="text" value={editName} onChange={e => setEditName(e.target.value)} disabled={editUser.roles?.[0]?.name === 'agent' || editUser.roles?.[0]?.name === 'user'} style={{...inputStyle, opacity: (editUser.roles?.[0]?.name === 'agent' || editUser.roles?.[0]?.name === 'user') ? 0.5 : 1}} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Department</label>
-              <input type="text" value={editDept} onChange={e => setEditDept(e.target.value)} style={inputStyle} />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Role</label>
-              <select value={editRole} onChange={e => setEditRole(e.target.value)} style={inputStyle}>
-                <option>Student</option><option>Faculty</option><option>Agent</option>
-              </select>
-            </div>
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Role</label>
+            <select value={editRole} onChange={e => setEditRole(e.target.value)} style={inputStyle}>
+              {roles.map(role => <option key={role.id} value={role.name}>{role.name}</option>)}
+            </select>
           </div>
           <button className="btn-primary" onClick={handleEditSave} style={{ width: '100%', padding: '12px' }}>Save Changes</button>
         </Modal>
@@ -174,7 +224,7 @@ const Users = () => {
         {/* Toolbar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {['all', 'students', 'faculty', 'agents', 'suspended'].map(f => (
+            {['all', 'users', 'agents', 'admins'].map(f => (
               <button key={f} onClick={() => setFilter(f)} style={{
                 padding: '8px 16px', background: filter === f ? 'var(--text-primary)' : 'transparent',
                 color: filter === f ? 'var(--bg)' : 'var(--text-secondary)', border: '1px solid',
@@ -195,7 +245,7 @@ const Users = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                {['User', 'Department', 'Role', 'Status', 'Last Login', 'Actions'].map((h) => (
+                {['User', 'Role', 'Joined', 'Actions'].map((h) => (
                   <th key={h} style={{ padding: '16px', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)', fontWeight: 500, textAlign: h === 'Actions' ? 'right' : 'left' }}>{h}</th>
                 ))}
               </tr>
@@ -207,29 +257,26 @@ const Users = () => {
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <td style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-elevated)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 600 }}>
-                        {u.name.split(' ').map(n => n[0]).join('')}
-                      </div>
+                      {u.avatar ? (
+                        <img src={u.avatar} alt={u.name} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-elevated)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 600 }}>
+                          {u.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                        </div>
+                      )}
                       <div>
                         <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '2px' }}>{u.name}</div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{u.email}</div>
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '16px', fontSize: '0.85rem' }}>{u.dept}</td>
                   <td style={{ padding: '16px' }}>
-                    <span style={{ padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', textTransform: 'uppercase', letterSpacing: '1px' }}>{u.role}</span>
+                    <span style={{ padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', textTransform: 'uppercase', letterSpacing: '1px' }}>{u.roles?.[0]?.name || 'user'}</span>
                   </td>
-                  <td style={{ padding: '16px' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: u.status === 'Active' ? '#22c55e' : '#ef4444' }}>
-                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: u.status === 'Active' ? '#22c55e' : '#ef4444' }} /> {u.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{u.lastLogin}</td>
+                  <td style={{ padding: '16px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{new Date(u.created_at).toLocaleDateString()}</td>
                   <td style={{ padding: '16px', textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
                       <button onClick={() => openEdit(u)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', padding: '6px', cursor: 'pointer' }} title="Edit"><Edit size={16} /></button>
-                      <button onClick={() => handleToggleSuspend(u.id)} style={{ background: 'transparent', border: 'none', color: u.status === 'Suspended' ? '#22c55e' : '#eab308', padding: '6px', cursor: 'pointer' }} title={u.status === 'Suspended' ? 'Reactivate' : 'Suspend'}><Ban size={16} /></button>
                       <button onClick={() => setDeleteTarget(u.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', padding: '6px', cursor: 'pointer' }} title="Delete"><Trash2 size={16} /></button>
                     </div>
                   </td>

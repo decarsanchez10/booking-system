@@ -82,10 +82,16 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (userData) => {
+    const merged = { ...user, ...userData };
+    localStorage.setItem('obsidian_user', JSON.stringify(merged));
+    setUser(merged);
+  };
+
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isAuthenticated, loading }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, updateUser, isAuthenticated, loading }}>
       {children}
     </AuthContext.Provider>
   );

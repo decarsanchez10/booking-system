@@ -21,6 +21,7 @@ class AdminController extends Controller
             'users' => User::count(),
             'agents' => User::whereHas('roles', fn ($query) => $query->where('name', 'agent'))->count(),
             'appointments' => Appointment::count(),
+            'appointments_today' => Appointment::whereDate('appointment_date', today())->count(),
             'open_tickets' => Ticket::whereNotIn('status', ['Resolved', 'Closed'])->count(),
             'active_services' => Service::where('is_active', true)->count(),
         ]);
@@ -28,7 +29,12 @@ class AdminController extends Controller
 
     public function users()
     {
-        return response()->json(User::with('roles:id,name')->latest()->paginate(50));
+        return response()->json(
+            User::with('roles:id,name')
+                ->select('id', 'name', 'email', 'created_at', 'avatar')
+                ->latest()
+                ->paginate(50)
+        );
     }
 
     public function createUser(Request $request)
@@ -61,15 +67,17 @@ class AdminController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        if (!empty($data['password'])) {
-            $data['password'] = Hash::make($data['password']);
-        } else {
-            unset($data['password']);
-        }
+        return DB::transaction(function () use ($data, $user) {
+            if (!empty($data['password'])) {
+                $data['password'] = Hash::make($data['password']);
+            } else {
+                unset($data['password']);
+            }
 
-        $user->update($data);
+            $user->update($data);
 
-        return response()->json($user->fresh()->load('roles:id,name'));
+            return response()->json($user->fresh()->load('roles:id,name'));
+        });
     }
 
     public function deleteUser(User $user)
@@ -113,5 +121,25 @@ class AdminController extends Controller
         }
 
         return response()->json(['message' => 'Settings updated.']);
+    }
+
+    public function roles()
+    {
+        return response()->json(Role::select('id', 'name')->get());
+    }
+
+    public function topAgents()
+    {
+        $topAgents = User::whereHas('roles', fn ($query) => $query->where('name', 'agent'))
+            ->withCount(['appointments' => fn ($query) => $query->where('status', 'completed')])
+            ->orderBy('appointments_count', 'desc')
+            ->limit(3)
+            ->get(['id', 'name', 'appointments_count']);
+
+        return response()->json($topAgents->map(fn ($agent) => [
+            'name' => $agent->name,
+            'resolved' => $agent->appointments_count,
+            'score' => 0, // CSAT score would need a ratings table
+        ]));
     }
 }

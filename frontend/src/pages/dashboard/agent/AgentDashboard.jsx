@@ -1,9 +1,11 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useAuth } from '../../../context/AuthContext';
-import { Calendar, Star, Clock, ArrowRight, CheckCircle, X } from 'lucide-react';
+import { Calendar, Clock, ArrowRight, CheckCircle, X } from 'lucide-react';
+import api from '../../../lib/api';
+import SpecialtySetupModal from '../../../components/SpecialtySetupModal';
 
 /* ── Modal ── */
 const Modal = ({ title, children, onClose }) => (
@@ -17,8 +19,15 @@ const Modal = ({ title, children, onClose }) => (
 );
 
 const AgentDashboard = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const container = useRef();
+
+  // Show specialties setup if agent has none
+  const needsSpecialtySetup = !user?.specialties || !Array.isArray(user.specialties) || user.specialties.length === 0;
+
+  const handleSpecialtyComplete = (updatedUser) => {
+    updateUser(updatedUser);
+  };
 
   // Current session state
   const [sessionActive, setSessionActive] = useState(true);
@@ -29,20 +38,47 @@ const AgentDashboard = () => {
   const [noteText, setNoteText] = useState('');
   const [noteSaved, setNoteSaved] = useState(false);
 
-  // Queue
-  const [queue, setQueue] = useState([
-    { time: '11:00 AM', name: 'James Wilson', issue: 'Monitor Display Flickering', type: 'Hardware', started: false },
-    { time: '01:30 PM', name: 'Dr. Patricia Kim', issue: 'Lab Software License Activation', type: 'Software', started: false },
-    { time: '02:00 PM', name: 'Marcus Johnson', issue: 'Unable to access student portal', type: 'Account', started: false },
-  ]);
+  // Queue and Stats
+  const [stats, setStats] = useState(null);
+  const [queue, setQueue] = useState([]);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const res = await api.get('/agent/dashboard');
+      setStats(res.data);
+      setQueue((res.data.today_queue || []).filter(apt => {
+        const status = apt.status?.toLowerCase();
+        return status !== 'completed' && status !== 'cancelled' && status !== 'closed';
+      }));
+    } catch (err) {
+      console.error('Failed to fetch agent dashboard', err);
+    }
+  };
 
   useGSAP(() => {
     gsap.from('.dash-card', { opacity: 0, y: 20, stagger: 0.1, duration: 0.5, ease: 'power2.out' });
   }, { scope: container });
 
-  const handleCompleteSession = () => {
-    setSessionActive(false);
-    setSessionCompleted(true);
+  const handleCompleteSession = async () => {
+    if (queue.length === 0) return;
+    try {
+      await api.put(`/agent/appointments/${queue[0].id}/status`, { status: 'Completed' });
+      setQueue(prev => prev.slice(1));
+      setSessionActive(false);
+      setSessionCompleted(true);
+      fetchDashboard(); // Refresh queue from backend
+      setTimeout(() => {
+        setSessionCompleted(false);
+        setSessionActive(true);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to complete session', err);
+      alert('Failed to complete session');
+    }
   };
 
   const handleSaveNote = () => {
@@ -57,6 +93,11 @@ const AgentDashboard = () => {
 
   return (
     <div ref={container}>
+      {/* Specialty Setup Modal (shows for new agents without specialties) */}
+      {needsSpecialtySetup && (
+        <SpecialtySetupModal onComplete={handleSpecialtyComplete} />
+      )}
+
       {/* Notes Modal */}
       {showNotes && (
         <Modal title="Add Session Notes" onClose={() => { setShowNotes(false); setNoteSaved(false); }}>
@@ -99,9 +140,8 @@ const AgentDashboard = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
         {[
-          { label: "Today's Appts", value: String(queue.length + (sessionActive ? 1 : 0)), icon: <Calendar size={20} />, color: 'var(--text-primary)' },
-          { label: 'Completed', value: String(sessionCompleted ? 1 : 0), icon: <CheckCircle size={20} />, color: 'var(--text-primary)' },
-          { label: 'Average Rating', value: '4.9', icon: <Star size={20} />, color: 'var(--accent)' },
+          { label: "Today's Appts", value: String(stats?.today_appointments || 0), icon: <Calendar size={20} />, color: 'var(--text-primary)' },
+          { label: 'Completed', value: String(stats?.completed_sessions || 0), icon: <CheckCircle size={20} />, color: 'var(--text-primary)' },
           { label: 'Hours Logged', value: '3.5', icon: <Clock size={20} />, color: 'var(--text-muted)' }
         ].map((stat, i) => (
           <div key={i} className="dash-card card" style={{ padding: '24px' }}>
@@ -114,20 +154,19 @@ const AgentDashboard = () => {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
           {/* Current Session */}
           <div className="dash-card card glowing-border" style={{ padding: '32px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: sessionActive ? 'var(--accent)' : '#22c55e' }} />
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: sessionActive && queue.length > 0 ? 'var(--accent)' : '#22c55e' }} />
 
             {sessionCompleted && !sessionActive ? (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
                 <CheckCircle size={48} color="#22c55e" style={{ marginBottom: '12px' }} />
                 <h3 style={{ fontSize: '1.3rem', marginBottom: '8px', color: '#22c55e' }}>Session Completed!</h3>
-                <p style={{ color: 'var(--text-muted)' }}>Network Troubleshooting with Alex Rivera has been resolved.</p>
+                <p style={{ color: 'var(--text-muted)' }}>The issue has been resolved.</p>
               </div>
-            ) : (
+            ) : queue.length > 0 ? (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
                   <div>
@@ -135,22 +174,28 @@ const AgentDashboard = () => {
                       <div style={{ fontSize: '0.75rem', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Current Session</div>
                       <span style={{ display: 'flex', width: '6px', height: '6px', background: '#ef4444', borderRadius: '50%', boxShadow: '0 0 8px rgba(239,68,68,0.8)' }} />
                     </div>
-                    <h3 style={{ fontSize: '1.2rem', marginBottom: '4px' }}>Network Troubleshooting</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Alex Rivera • Computer Science Student</p>
+                    <h3 style={{ fontSize: '1.2rem', marginBottom: '4px' }}>{queue[0].category}</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{queue[0].user?.name} • {queue[0].description}</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.1rem', marginBottom: '4px', color: '#22c55e' }}>00:14:32</div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Elapsed Time</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.1rem', marginBottom: '4px', color: '#22c55e' }}>Active</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Status</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '12px', borderTop: '1px solid var(--border)', paddingTop: '20px', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Ticket ID: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>APT-1048</span></div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Date: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{new Date(queue[0].appointment_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.8rem' }} onClick={() => setShowNotes(true)}>Add Notes</button>
                     <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.8rem', background: '#22c55e' }} onClick={handleCompleteSession}>Complete Session</button>
                   </div>
                 </div>
               </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <CheckCircle size={48} color="var(--text-muted)" style={{ marginBottom: '12px' }} />
+                <h3 style={{ fontSize: '1.3rem', marginBottom: '8px', color: 'var(--text-primary)' }}>No Active Sessions</h3>
+                <p style={{ color: 'var(--text-muted)' }}>You have no appointments currently in queue.</p>
+              </div>
             )}
           </div>
 
@@ -162,12 +207,12 @@ const AgentDashboard = () => {
             </h3>
             {queue.map((booking, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '16px 0', borderBottom: i !== queue.length - 1 ? '1px solid var(--border)' : 'none', gap: '24px' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', width: '80px' }}>{booking.time}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', width: '80px' }}>{new Date(booking.appointment_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 500, fontSize: '0.95rem', marginBottom: '4px' }}>{booking.name}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{booking.issue}</div>
+                  <div style={{ fontWeight: 500, fontSize: '0.95rem', marginBottom: '4px' }}>{booking.user?.name || 'Unknown User'}</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{booking.description}</div>
                 </div>
-                <div style={{ padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', background: 'var(--overlay-soft)', border: '1px solid var(--overlay-medium)', textTransform: 'uppercase', letterSpacing: '1px' }}>{booking.type}</div>
+                <div style={{ padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', background: 'var(--overlay-soft)', border: '1px solid var(--overlay-medium)', textTransform: 'uppercase', letterSpacing: '1px' }}>{booking.category}</div>
                 <button
                   className={booking.started ? 'btn-secondary' : 'btn-secondary'}
                   style={{
@@ -182,31 +227,10 @@ const AgentDashboard = () => {
                 </button>
               </div>
             ))}
+            {queue.length === 0 && (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', padding: '20px 0' }}>No upcoming appointments today.</p>
+            )}
           </div>
-        </div>
-
-        {/* Right Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div className="dash-card card" style={{ padding: '24px' }}>
-            <h3 style={{ fontSize: '1rem', marginBottom: '20px' }}>Recent Feedback</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {[
-                { name: 'Alex R.', rating: 5, comment: 'Super fast resolution. Thanks!' },
-                { name: 'Prof. Davis', rating: 5, comment: 'Very knowledgeable agent.' },
-              ].map((fb, i) => (
-                <div key={i} style={{ paddingBottom: '16px', borderBottom: i === 0 ? '1px solid var(--border)' : 'none' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{fb.name}</div>
-                    <div style={{ display: 'flex', gap: '2px', color: 'var(--accent)' }}>
-                      {[...Array(5)].map((_, j) => <Star key={j} size={12} fill={j < fb.rating ? 'var(--accent)' : 'none'} />)}
-                    </div>
-                  </div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>"{fb.comment}"</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

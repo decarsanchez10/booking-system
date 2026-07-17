@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\ChatMessage;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class AppointmentController extends Controller
@@ -13,7 +15,7 @@ class AppointmentController extends Controller
     public function userIndex(Request $request)
     {
         return response()->json(
-            Appointment::with('agent:id,name,email')
+            Appointment::with('agent:id,name,email,specialties')
                 ->where('user_id', $request->user()->id)
                 ->latest('appointment_date')
                 ->paginate(20)
@@ -23,7 +25,7 @@ class AppointmentController extends Controller
     public function agentIndex(Request $request)
     {
         return response()->json(
-            Appointment::with('user:id,name,email')
+            Appointment::with('user:id,name,email,avatar')
                 ->where('agent_id', $request->user()->id)
                 ->latest('appointment_date')
                 ->paginate(20)
@@ -42,18 +44,30 @@ class AppointmentController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'agent_id' => 'nullable|exists:users,id',
+            'agent_id' => 'required|exists:users,id',
             'category' => 'required|string|max:100',
             'appointment_date' => 'required|date|after:now',
             'priority' => 'nullable|in:Low,Medium,High,Urgent',
             'description' => 'required|string|max:5000',
         ]);
 
-        $data['user_id'] = $request->user()->id;
-        $data['status'] = 'Pending';
-        $this->abortOnConflict($data['agent_id'] ?? null, $data['appointment_date']);
+        return DB::transaction(function () use ($data, $request) {
+            $data['user_id'] = $request->user()->id;
+            $data['status'] = 'Pending';
+            $this->abortOnConflict($data['agent_id'], $data['appointment_date']);
 
-        return response()->json(Appointment::create($data)->load('agent:id,name,email'), 201);
+            $appointment = Appointment::create($data);
+
+            // Auto-create welcome message to start chat conversation
+            ChatMessage::create([
+                'appointment_id' => $appointment->id,
+                'sender_id' => $request->user()->id,
+                'message' => "Hi! I've booked an appointment for {$data['category']}. Looking forward to our session!",
+                'is_read' => false,
+            ]);
+
+            return response()->json($appointment->load('agent:id,name,email,specialties'), 201);
+        });
     }
 
     public function cancel(Request $request, Appointment $appointment)

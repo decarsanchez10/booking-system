@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Ticket, Plus, Search, X, CheckCircle, Upload } from 'lucide-react';
+import api from '../../../lib/api';
 
 /* ── Modal ── */
 const Modal = ({ title, children, onClose }) => (
@@ -30,11 +31,20 @@ const MyTickets = () => {
   const [creating, setCreating] = useState(false);
   const [createSuccess, setCreateSuccess] = useState(false);
 
-  const [tickets, setTickets] = useState([
-    { id: 'TKT-1029', subject: 'Laptop battery not charging', status: 'Open', priority: 'High', date: '2026-07-15', category: 'Hardware', description: 'My laptop battery stopped charging. The charger light doesn\'t turn on.' },
-    { id: 'TKT-1028', subject: 'Need access to VPN', status: 'In Progress', priority: 'Medium', date: '2026-07-14', category: 'Network', description: 'I need VPN access configured for remote work.' },
-    { id: 'TKT-0954', subject: 'Printer on 3rd floor is jammed', status: 'Resolved', priority: 'Low', date: '2026-07-10', category: 'Printer', description: 'The HP printer on the 3rd floor keeps jamming on page 2.' },
-  ]);
+  const [tickets, setTickets] = useState([]);
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
+
+  const fetchTickets = async () => {
+    try {
+      const res = await api.get('/user/tickets');
+      setTickets(res.data.data || res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch tickets', err);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -46,28 +56,29 @@ const MyTickets = () => {
     }
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!newSubject || !newCategory || !newDescription) return;
     setCreating(true);
-    setTimeout(() => {
-      const newTicket = {
-        id: `TKT-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+    try {
+      await api.post('/user/tickets', {
         subject: newSubject,
-        status: 'Open',
-        priority: newPriority,
-        date: new Date().toISOString().split('T')[0],
         category: newCategory,
+        priority: newPriority,
         description: newDescription,
-      };
-      setTickets(prev => [newTicket, ...prev]);
-      setCreating(false);
+      });
       setCreateSuccess(true);
+      fetchTickets();
       setTimeout(() => {
         setShowCreate(false);
         setCreateSuccess(false);
         setNewSubject(''); setNewCategory(''); setNewPriority('Medium'); setNewDescription(''); setNewFile(null);
       }, 1500);
-    }, 1000);
+    } catch (err) {
+      console.error('Failed to create ticket', err);
+      alert('Failed to create ticket. Please try again.');
+    } finally {
+      setCreating(false);
+    }
   };
 
   const filtered = tickets.filter(t => {
