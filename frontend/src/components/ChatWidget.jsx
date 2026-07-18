@@ -277,14 +277,29 @@ const ChatWidget = () => {
 
   const fetchConversations = useCallback(async () => {
     if (!user) return;
-    const role = user.roles?.[0]?.name;
+    const role = user.role || user.roles?.[0]?.name;
     if (!role || (role !== 'user' && role !== 'agent')) return;
     try {
       const prefix = role === 'agent' ? 'agent' : 'user';
       const { data } = await api.get(`/${prefix}/chat/conversations`);
-      setConversations(data);
-      setUnreadTotal(data.reduce((acc, c) => acc + (c.unread || 0), 0));
-    } catch { /* silent */ }
+      console.log('Conversations fetched:', data);
+      
+      // Deduplicate conversations by other_user.id so names don't duplicate
+      const uniqueConversations = [];
+      const seen = new Set();
+      for (const conv of data) {
+        const otherId = conv.other_user?.id;
+        if (otherId && !seen.has(otherId)) {
+          seen.add(otherId);
+          uniqueConversations.push(conv);
+        }
+      }
+      
+      setConversations(uniqueConversations);
+      setUnreadTotal(uniqueConversations.reduce((acc, c) => acc + (c.unread || 0), 0));
+    } catch (err) {
+      console.error('Failed to fetch conversations:', err);
+    }
   }, [user]);
 
   useEffect(() => {
@@ -295,9 +310,16 @@ const ChatWidget = () => {
     return () => clearInterval(pollRef.current);
   }, [user, fetchConversations]);
 
+  // Auto-open chat when conversations exist
+  useEffect(() => {
+    if (conversations.length > 0 && !open) {
+      setOpen(true);
+    }
+  }, [conversations]);
+
   if (!user) return null;
   // Don't show for admin
-  const role = user.roles?.[0]?.name;
+  const role = user.role || user.roles?.[0]?.name;
   if (role === 'admin') return null;
 
   return (

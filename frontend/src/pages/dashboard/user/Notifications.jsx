@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Bell, CheckCheck, Calendar, Ticket, AlertCircle, Info } from 'lucide-react';
+import api from '../../../lib/api';
 
 const getIcon = (type) => {
   switch (type) {
@@ -19,38 +20,52 @@ const getIconBg = (type) => {
   }
 };
 
-const mockNotifications = [
-  {
-    id: 1,
-    type: 'appointment',
-    title: 'Appointment Reminder',
-    message: 'Your appointment with Agent Mike is tomorrow at 10:00 AM.',
-    time: '2 hours ago',
-    read: false,
-  },
-  {
-    id: 2,
-    type: 'ticket',
-    title: 'Ticket #TKT-1029 Updated',
-    message: 'Your ticket status has been updated to "In Progress".',
-    time: '4 hours ago',
-    read: false,
-  },
-  {
-    id: 4,
-    type: 'info',
-    title: 'Welcome to RacedCore IT Support!',
-    message: 'Your account is set up. Book your first appointment or browse the knowledge base.',
-    time: '3 days ago',
-    read: true,
-  },
-];
-
 const Notifications = () => {
-  const [notifications, setNotifications] = useState(mockNotifications);
-  const unreadCount = notifications.filter(n => !n.read).length;
-  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  const markOneRead = (id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  const [notifications, setNotifications] = useState([]);
+  const pollRef = useRef(null);
+
+  const fetchNotifications = async () => {
+    try {
+      const { data } = await api.get('/notifications');
+      setNotifications(data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch notifications', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    pollRef.current = setInterval(fetchNotifications, 5000);
+    return () => clearInterval(pollRef.current);
+  }, []);
+
+  const unreadCount = notifications.filter(n => !n.read_at).length;
+
+  const markAllRead = async () => {
+    try {
+      await api.post('/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, read_at: new Date().toISOString() })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const markOneRead = async (id) => {
+    try {
+      await api.post(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const parseData = (dataStr) => {
+    try {
+      return JSON.parse(dataStr);
+    } catch {
+      return {};
+    }
+  };
 
   return (
     <div>
@@ -87,47 +102,54 @@ const Notifications = () => {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {notifications.map(notif => (
+          {notifications.map(notif => {
+            const parsedData = parseData(notif.data);
+            const isRead = !!notif.read_at;
+            const notifType = parsedData.type || 'info';
+            
+            return (
             <div key={notif.id} style={{
               display: 'flex',
               gap: '16px',
               padding: '20px',
-              background: notif.read ? 'rgba(255,255,255,0.02)' : 'rgba(0,240,255,0.04)',
-              border: `1px solid ${notif.read ? 'var(--border)' : 'rgba(0,240,255,0.15)'}`,
+              background: isRead ? 'rgba(255,255,255,0.02)' : 'rgba(0,240,255,0.04)',
+              border: `1px solid ${isRead ? 'var(--border)' : 'rgba(0,240,255,0.15)'}`,
               borderRadius: '14px',
               transition: 'all 0.2s',
               cursor: 'pointer',
             }}
-              onClick={() => markOneRead(notif.id)}
+              onClick={() => !isRead && markOneRead(notif.id)}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(0,240,255,0.3)'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = notif.read ? 'var(--border)' : 'rgba(0,240,255,0.15)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = isRead ? 'var(--border)' : 'rgba(0,240,255,0.15)'}
             >
               <div style={{
                 width: '44px',
                 height: '44px',
                 borderRadius: '12px',
-                background: getIconBg(notif.type),
+                background: getIconBg(notifType),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
               }}>
-                {getIcon(notif.type)}
+                {getIcon(notifType)}
               </div>
 
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                  <h3 style={{ fontSize: '1rem', fontWeight: notif.read ? 400 : 600 }}>{notif.title}</h3>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', flexShrink: 0, marginLeft: '12px' }}>{notif.time}</span>
+                  <h3 style={{ fontSize: '1rem', fontWeight: isRead ? 400 : 600 }}>{parsedData.title || notif.type}</h3>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', flexShrink: 0, marginLeft: '12px' }}>
+                    {new Date(notif.created_at).toLocaleDateString()}
+                  </span>
                 </div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.5' }}>{notif.message}</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.5' }}>{parsedData.message}</p>
               </div>
 
-              {!notif.read && (
+              {!isRead && (
                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: '8px' }} />
               )}
             </div>
-          ))}
+          )})}
         </div>
       )}
     </div>

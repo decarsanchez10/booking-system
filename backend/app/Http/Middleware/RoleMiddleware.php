@@ -16,6 +16,8 @@ class RoleMiddleware
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
+        $user->loadMissing('roles');
+
         foreach ($roles as $role) {
             if ($user->hasRole($role)) {
                 return $next($request);

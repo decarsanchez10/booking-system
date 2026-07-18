@@ -81,31 +81,24 @@ class ChatController extends Controller
         return response()->json(['unread' => $count]);
     }
 
-    /**
-     * Get list of chat conversations for the current user.
-     */
     public function conversations(Request $request)
     {
         $user = $request->user();
 
-        $appointments = Appointment::with(['user:id,name,avatar', 'agent:id,name,avatar'])
+        $appointments = Appointment::with(['user:id,name,avatar', 'agent:id,name,avatar', 'latestMessage'])
+            ->withCount(['chatMessages as unread' => function ($q) use ($user) {
+                $q->where('sender_id', '!=', $user->id)
+                  ->where('is_read', false);
+            }])
             ->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)
                   ->orWhere('agent_id', $user->id);
             })
-            ->whereIn('status', ['Pending', 'Confirmed', 'In Progress', 'Completed'])
             ->latest('appointment_date')
             ->get()
             ->map(function ($apt) use ($user) {
-                $lastMsg = ChatMessage::where('appointment_id', $apt->id)
-                    ->latest()
-                    ->first();
-
-                $unread = ChatMessage::where('appointment_id', $apt->id)
-                    ->where('sender_id', '!=', $user->id)
-                    ->where('is_read', false)
-                    ->count();
-
+                $lastMsg = $apt->latestMessage;
+                $unread = $apt->unread;
                 $otherUser = $user->id === $apt->user_id ? $apt->agent : $apt->user;
 
                 return [
